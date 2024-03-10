@@ -98,7 +98,7 @@ class Diffusion:
         return torch.mean(torch.abs((torch.div(predicted_noise - noise, noise,rounding_mode="trunc"))))
         
     def reverse_process(self,x,y,epochs=1000,batch_size=32,val_x=None,val_y=None,hidden_size1=80, hidden_size2=60,hidden_size3=40,hidden_size4=50,hidden_size5=50,learning_rate=0.001,early_stop=False):
-        model=MLP_skip(input_size=x.shape[1],output_size=x.shape[1],Y_dim=y.shape[-1],hidden_size1=hidden_size1, hidden_size2=hidden_size2,hidden_size3=hidden_size3,hidden_size4=hidden_size4,hidden_size5=hidden_size5).to(self.device)
+        model=MLP(input_size=x.shape[1],output_size=x.shape[1],Y_dim=y.shape[-1],hidden_size1=hidden_size1, hidden_size2=hidden_size2,hidden_size3=hidden_size3,hidden_size4=hidden_size4,hidden_size5=hidden_size5).to(self.device)
         optimizer = optim.Adam(model.parameters(), lr=learning_rate,weight_decay=1e-5)
         Loss_Function=nn.MSELoss()
         # Loss_Function= self.MAPE
@@ -212,10 +212,11 @@ def load_FCA():
     PM  = 2
     POWER = 3
     CLOAD = 4
-    Values=["1.0","1.5","2.5"]
-    final_matrix = np.empty((0, 5))
+    Values=["1.0","1.5","2.5","3.5","4.0","4.5","5.0"]
+    final_matrix_Y = np.empty((0, 5))
+    final_matrix_X = np.empty((0, 19))
     for c_value in Values:
-        data = loadmat('/media/ssd/Anot/MEEC/3 sem/PIC/Code/data/FCA/different Cload POFs_v2/Cload'+c_value+'00000e-13/matlab.mat')
+        data = loadmat('/media/ssd/Anot/MEEC/Tese/Code/data/FCA/different Cload POFs_v2/Cload'+c_value+'00000e-13/matlab.mat')
         X = np.zeros((100, 5))
         Y = np.array(data['archive3d'])[:,:,-1]
         X[:,GBW] = np.array(data['archive_bw'])[-1,:]
@@ -225,9 +226,12 @@ def load_FCA():
         
         
         X[:,CLOAD] = data['Cload'][0,0]
-        final_matrix = np.concatenate((final_matrix, X), axis=0)
-    df_Y = pd.DataFrame(final_matrix, columns=['GBW', 'GDC', 'PM','POWER','CLOAD'])
-    return df_Y
+        final_matrix_X = np.concatenate((final_matrix_X, Y), axis=0)
+        final_matrix_Y = np.concatenate((final_matrix_Y, X), axis=0)
+    df_Y = pd.DataFrame(final_matrix_Y, columns=['GBW', 'GDC', 'PM','POWER','CLOAD'])
+    df_X=pd.DataFrame(final_matrix_X, columns=['LM1', 'LM2', 'LM3', 'LM4', 'LM5', 'LM6', 'LM7', 'LM8', 'WM1', 'WM2', 'WM3', 'WM4', 
+    'WM5', 'WM6', 'WM7', 'WM8', 'Vcm1','Vcm2','Rb' ])
+    return df_Y,df_X
 
 def dataset_info(df):
     
@@ -346,17 +350,17 @@ def main():
         'learning_rate':0.00001
     }
     best_weight=10
-    dataframe = pd.read_csv("data/vcota.csv")
-    df_X = dataframe[['w8','w6','w4','w10','w1','w0','l8','l6','l4','l10','l1','l0']]
-    df_Y = dataframe[['gdc','idd','gbw','pm']]
-
+    # dataframe = pd.read_csv("data/vcota.csv")
+    # df_X = dataframe[['w8','w6','w4','w10','w1','w0','l8','l6','l4','l10','l1','l0']]
+    # df_Y = dataframe[['gdc','idd','gbw','pm']]
+    
     
     # dataset_info(df_X)
     
     # dataset_info(df_Y)
 
-
-    df_X[0:100].to_csv('DF_x.csv')
+    df_Y,df_X=load_FCA()
+    # df_X[0:100].to_csv('DF_x.csv')
     Y_rep=df_Y.values
     X_rep=df_X.values
     
@@ -372,7 +376,7 @@ def main():
     X_train, X_test,Y_train,Y_test = train_test_split(X,Y, test_size=0.2)
     X_val, X_test,Y_val,Y_test = train_test_split(X_test,Y_test, test_size=0.5)
 
-    Y_train,X_train = augment_data(Y_train,X_train,np.array([-1,1, -1, 0]), repetition_factor=10)
+    # Y_train,X_train = augment_data(Y_train,X_train,np.array([-1,1, -1, 0]), repetition_factor=10)
 
 
     DDPM=Diffusion(vect_size=X.shape[1])
@@ -398,13 +402,13 @@ def main():
 
 
     
-    DDPM.reverse_process(X_train,Y_train,val_x=X_val,val_y=Y_val,epochs=200,**hyper_parameters,early_stop=True)
+    DDPM.reverse_process(X_train,Y_train,val_x=X_val,val_y=Y_val,epochs=1000,**hyper_parameters,early_stop=True)
     torch.save(DDPM.model.state_dict(), "MLP.pth")
 
 
 
     
-    DDPM.model=MLP_skip(input_size=X.shape[1],output_size=X.shape[1],Y_dim=Y.shape[-1],**hyper_parameters)
+    DDPM.model=MLP(input_size=X.shape[1],output_size=X.shape[1],Y_dim=Y.shape[-1],**hyper_parameters)
     DDPM.model.load_state_dict(torch.load("MLP.pth"))
 
     df_X_test=pd.DataFrame(X_test,columns=df_X.columns)
@@ -430,7 +434,7 @@ def main():
     Train_error(Y_train,DDPM,best_weight,X_train,df_X)
     print("\n\n\nTest Error")
     Test_error(Y_test,DDPM,best_weight,X_test,df_X,df_X_test)
-    target_Predictions(min_y,max_y,df_Y,DDPM,df_X,best_weight,min_value,max_value)
+    # target_Predictions(min_y,max_y,df_Y,DDPM,df_X,best_weight,min_value,max_value)
     
     
     
