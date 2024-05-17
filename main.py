@@ -80,6 +80,8 @@ def main():
     #     df_y,
     #     network,
     #     type,
+    #     epoch=50,
+    #     n_trials=20,
     # )
     with open(f"best_hyperparameters{type}.json", "r") as file:
         hyper_parameters = json.load(file)
@@ -92,7 +94,7 @@ def main():
         df_y,
         X_val=X_val,
         y_val=y_val,
-        epochs=1000,
+        epochs=2000,
         early_stop=False,
         **hyper_parameters,
     )
@@ -113,7 +115,7 @@ def main():
     # start_time = time.time()
 
     # df_Sampled.to_csv('Uncod_Sampled.csv')
-    histogram(DDPM, best_weight, y_test, df_X, X_train)
+    histogram(DDPM, best_weight, y, df_X, X_train)
     Train_error(
         y_train,
         DDPM,

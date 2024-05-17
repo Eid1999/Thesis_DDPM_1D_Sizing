@@ -45,6 +45,7 @@ def HYPERPARAMETERS_OPT(
             y_val=y_val,
             **params,
             trial=trial,
+            early_stop=False,
         )
 
         return np.mean(error)
@@ -52,7 +53,7 @@ def HYPERPARAMETERS_OPT(
     study = optuna.create_study(
         direction="minimize",
         sampler=optuna.samplers.TPESampler(seed=0),
-        pruner=optuna.pruners.SuccessiveHalvingPruner(),
+        # pruner=optuna.pruners.SuccessiveHalvingPruner(),
     )
     study.optimize(objective, n_trials=n_trials)  # type: ignore
     best_trial = study.best_trial
@@ -97,9 +98,10 @@ def GUIDANCE_WEIGTH_OPT(DDPM, y_val, df_X, df_y, type):
 
         return np.mean(error)
 
+    sampler = (optuna.samplers.TPESampler(seed=0),)
     study = optuna.create_study(
         direction="minimize"
     )  # We want to minimize the objective function
-    study.optimize(objective, n_trials=10)
+    study.optimize(objective, n_trials=20)
     with open(f"best_weight{type}.json", "w") as file:
         json.dump(study.best_params, file, indent=4)

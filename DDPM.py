@@ -81,7 +81,7 @@ class Diffusion:
                     * (x - ((1 - alpha) / sqrt_one_minus_alpha_hat) * predicted_noise)
                     + torch.sqrt(beta) * z
                 )
-            # torch.clamp(x, min=-1, max=1)
+                x = torch.clamp(x, min=-1, max=1)
 
         model.train()
 
@@ -189,8 +189,8 @@ class Diffusion:
             training_loss = np.mean(batch_loss_training)
             if trial is not None:
                 trial.report(np.mean(error), step=epoch + 1)
-                if trial.should_prune():
-                    raise optuna.exceptions.TrialPruned()
+                # if trial.should_prune():
+                #     raise optuna.exceptions.TrialPruned()
 
         return training_loss, error if y_val is not None else training_loss
 
