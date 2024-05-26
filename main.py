@@ -71,18 +71,18 @@ def main():
     y_val = torch.tensor(y_val, dtype=torch.float32, device=DDPM.device)
     y_test = torch.tensor(y_test, dtype=torch.float32, device=DDPM.device)
 
-    # HYPERPARAMETERS_OPT(
-    #     X_train,
-    #     y_train,
-    #     X_val,
-    #     y_val,
-    #     df_X,
-    #     df_y,
-    #     network,
-    #     type,
-    #     epoch=50,
-    #     n_trials=20,
-    # )
+    HYPERPARAMETERS_OPT(
+        X_train,
+        y_train,
+        X_val,
+        y_val,
+        df_X,
+        df_y,
+        network,
+        type,
+        epoch=50,
+        n_trials=20,
+    )
     with open(f"best_hyperparameters{type}.json", "r") as file:
         hyper_parameters = json.load(file)
 
@@ -94,7 +94,7 @@ def main():
         df_y,
         X_val=X_val,
         y_val=y_val,
-        epochs=2000,
+        epochs=5000,
         early_stop=False,
         **hyper_parameters,
     )

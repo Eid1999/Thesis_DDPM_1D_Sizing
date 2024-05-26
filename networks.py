@@ -73,7 +73,7 @@ class MLP(nn.Module):
         ):
             t_aux = time_embedding(t)
             if y is not None:
-                t_aux = y_vectorization(y)
+                t_aux *= y_vectorization(y)
             x = hidden_layer(x + t_aux)
         return x
 
@@ -176,7 +176,7 @@ class MLP_skip(nn.Module):
         ):
             t_aux = time_embedding(t)
             if y is not None:
-                t_aux = y_vectorization(y)
+                t_aux *= y_vectorization(y)
             x = (
                 hidden_layer(x + t_aux)
                 if i - 1 < len(self.hidden_layers) // 2
