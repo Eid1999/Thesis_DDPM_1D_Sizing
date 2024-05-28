@@ -249,7 +249,13 @@ def main():
     y_val = torch.tensor(y_val, dtype=torch.float32, device=device)
     X_test = torch.tensor(x_test, dtype=torch.float32, device=device)
     y_test = torch.tensor(y_test, dtype=torch.float32, device=device)
-    # HYPERPARAMETERS_OPT(X_train, y_train, X_val, y_val)
+
+    HYPERPARAMETERS_OPT(
+        X_train,
+        y_train,
+        X_val,
+        y_val,
+    )
 
     with open("best_simulator.json", "r") as file:
         hyper_parameters = json.load(file)

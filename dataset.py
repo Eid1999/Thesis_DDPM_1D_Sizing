@@ -3,7 +3,7 @@ from sklearn.preprocessing import StandardScaler
 
 # norm = "minmax"
 
-norm = "minmax"
+norm = "standardize"
 
 
 def load_FCA():

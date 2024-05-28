@@ -13,15 +13,11 @@ from Evaluations import (
     test_performaces,
     histogram,
 )
+import seaborn as sns
 from optimization import HYPERPARAMETERS_OPT, GUIDANCE_WEIGTH_OPT
 from DDPM import Diffusion
 
 type = "MLP_skip"
-
-seed_value = 0
-torch.manual_seed(seed_value)
-torch.cuda.manual_seed(seed_value)
-np.random.seed(seed_value)
 
 
 def main():
@@ -40,7 +36,28 @@ def main():
         ["w8", "w6", "w4", "w10", "w1", "w0", "l8", "l6", "l4", "l10", "l1", "l0"]
     ]
     df_y = dataframe[["gdc", "idd", "gbw", "pm"]]
+    fid, ax = plt.subplots(1, 2)
+    sns.scatterplot(
+        data=df_y,
+        y="gbw",
+        x="gdc",
+        ax=ax[0],
+    )
 
+    sns.scatterplot(
+        data=df_y,
+        y="idd",
+        x="pm",
+        ax=ax[1],
+    )
+    ax[0].set_yscale("log")
+    ax[1].set_yscale("log")
+    ax[0].set_xlabel("Gain[dB]", fontsize=14)
+    ax[0].set_ylabel("Gain Bandwidth Product[Hz]", fontsize=14)
+    ax[1].set_xlabel("Phase [deg]", fontsize=14)
+    ax[1].set_ylabel("Bias Current[\\mu A]", fontsize=14)
+    plt.suptitle("VCOTA Performace Dataset", fontsize=14)
+    plt.show()
     X = normalization(df_X)
     y = normalization(df_y)
 
@@ -71,18 +88,18 @@ def main():
     y_val = torch.tensor(y_val, dtype=torch.float32, device=DDPM.device)
     y_test = torch.tensor(y_test, dtype=torch.float32, device=DDPM.device)
 
-    HYPERPARAMETERS_OPT(
-        X_train,
-        y_train,
-        X_val,
-        y_val,
-        df_X,
-        df_y,
-        network,
-        type,
-        epoch=50,
-        n_trials=20,
-    )
+    # HYPERPARAMETERS_OPT(
+    #     X_train,
+    #     y_train,
+    #     X_val,
+    #     y_val,
+    #     df_X,
+    #     df_y,
+    #     network,
+    #     type,
+    #     epoch=50,
+    #     n_trials=10,
+    # )
     with open(f"best_hyperparameters{type}.json", "r") as file:
         hyper_parameters = json.load(file)
 
@@ -94,7 +111,7 @@ def main():
         df_y,
         X_val=X_val,
         y_val=y_val,
-        epochs=5000,
+        epochs=500,
         early_stop=False,
         **hyper_parameters,
     )
@@ -140,12 +157,14 @@ def main():
         df_y,
         display=True,
     )
-    # target_Predictions(
-    #     df_y,
-    #     DDPM,
-    #     df_X,
-    #     best_weight,
-    # )
+    target_Predictions(
+        y_test,
+        DDPM,
+        best_weight,
+        df_X,
+        df_y,
+        display=True,
+    )
 
     # Calculate mean squared error
 

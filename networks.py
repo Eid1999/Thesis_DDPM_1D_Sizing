@@ -7,6 +7,7 @@ from math import ceil
 
 
 class MLP(nn.Module):
+
     def __init__(
         self,
         input_size=91,
@@ -14,7 +15,12 @@ class MLP(nn.Module):
         output_size=91,
         dim=6,
         y_dim=15,
+        seed_value=0,
     ):
+
+        torch.manual_seed(seed_value)
+        torch.cuda.manual_seed(seed_value)
+        np.random.seed(seed_value)
         super(MLP, self).__init__()
         self.dim = dim
         self.hidden_layers = nn.ModuleList(
@@ -27,7 +33,7 @@ class MLP(nn.Module):
                         ),
                     ),
                     (
-                        nn.BatchNorm1d(hidden_layers[i])
+                        nn.LayerNorm(hidden_layers[i])
                         if i < len(hidden_layers)
                         else nn.Identity()
                     ),
@@ -87,7 +93,12 @@ class MLP_skip(nn.Module):
         output_size=91,
         dim=6,
         y_dim=15,
+        seed_value=0,
     ):
+
+        torch.manual_seed(seed_value)
+        torch.cuda.manual_seed(seed_value)
+        np.random.seed(seed_value)
         super(MLP_skip, self).__init__()
         self.dim = dim
 
@@ -109,7 +120,7 @@ class MLP_skip(nn.Module):
                         ),
                     ),
                     (
-                        nn.BatchNorm1d(hidden_layers[i])
+                        nn.LayerNorm(hidden_layers[i])
                         if i < len(hidden_layers)
                         else nn.Identity()
                     ),

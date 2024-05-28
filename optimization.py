@@ -1,6 +1,6 @@
 from requirements import *
 from DDPM import Diffusion
-from Evaluations import test_performaces
+from Evaluations import test_performaces, target_Predictions
 from optuna.visualization import (
     plot_intermediate_values,
     plot_parallel_coordinate,
@@ -23,7 +23,7 @@ def HYPERPARAMETERS_OPT(
     n_trials=20,
 ):
     def objective(trial):
-        num_layers = trial.suggest_int("num_layers", 2, 20)
+        num_layers = trial.suggest_int("num_layers", 5, 30)
         params = {
             "hidden_layers": [
                 trial.suggest_int(f"hidden_size{i}", 20, 5000, log=True)
