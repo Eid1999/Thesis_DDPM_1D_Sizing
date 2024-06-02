@@ -1,41 +1,57 @@
 from requirements import *
 from Evaluations import test_performaces, target_Predictions
 
+
 torch.manual_seed(0)
 
 
 class Diffusion:
     def __init__(
         self,
-        noise_steps=50,
+        noise_steps=100,
         vect_size=91,
         device="cuda",
     ):
-
         self.noise_steps = noise_steps
         self.vect_size = vect_size
         self.device = device
+        self.X_norm_max = torch.tensor(
+            [1] * 12, device=self.device, dtype=torch.float32
+        )
+        self.X_norm_min = torch.tensor(
+            [-1] * 12, device=self.device, dtype=torch.float32
+        )
 
         self.beta = self.prepare_noise_schedule().to(device)
         # self.beta = self.prepare_noise_schedule()
         self.alpha = 1.0 - self.beta
         self.alpha_hat = torch.cumprod(self.alpha, dim=0)
 
-    def prepare_noise_schedule(self, s=0.008):
+    def prepare_noise_schedule(self, s=0.008, scheduler="cosine_schedule()"):
 
         # linear schedule
+        def linear_schedule(beta_start=0.0001, beta_end=0.1):
 
-        # return torch.linspace(self.beta_start, self.beta_end, self.noise_steps)
+            return torch.linspace(beta_start, beta_end, self.noise_steps)
 
         # cosine schedule
+        def cosine_schedule(scaler=0.1):
+            x = torch.linspace(0, self.noise_steps, self.noise_steps + 1)
+            alphas_cumprod = (
+                torch.cos(((x / self.noise_steps) + s) / (1 + s) * torch.pi * 0.5) ** 2
+            )
+            alphas_cumprod = alphas_cumprod / alphas_cumprod[0]
+            betas = 1 - (alphas_cumprod[1:] / alphas_cumprod[:-1])
+            return torch.clip(betas, 0.0001, 0.99999) * scaler
 
-        x = torch.linspace(0, self.noise_steps, self.noise_steps + 1)
-        alphas_cumprod = (
-            torch.cos(((x / self.noise_steps) + s) / (1 + s) * torch.pi * 0.5) ** 2
-        )
-        alphas_cumprod = alphas_cumprod / alphas_cumprod[0]
-        betas = 1 - (alphas_cumprod[1:] / alphas_cumprod[:-1])
-        return torch.clip(betas, 0.0001, 0.99999)
+        def logarithmic_schedule(beta_start=0.0001, beta_end=0.02):
+            return torch.logspace(
+                start=beta_start,
+                end=beta_end,
+                steps=self.noise_steps,
+            )
+
+        return cosine_schedule()
 
     def forward_process(self, x, t):
         # p(xt|x0) := N (xt; √αtx0, (1 − αtI))
@@ -81,7 +97,7 @@ class Diffusion:
                     * (x - ((1 - alpha) / sqrt_one_minus_alpha_hat) * predicted_noise)
                     + torch.sqrt(beta) * z
                 )
-                x = torch.clamp(x, min=-1, max=1)
+        x = torch.minimum(torch.maximum(x, self.X_norm_min), self.X_norm_max)
 
         model.train()
 
@@ -137,23 +153,10 @@ class Diffusion:
         best_val_loss = float("inf")
         counter = 0
         self.model.eval()
-        if y_val is not None:
-            error = test_performaces(
-                y_val,
-                self,
-                3,
-                df_X,
-                df_y,
-                display=False,
-            )
-        self.model.train()
-        if trial is not None:
-            trial.report(np.mean(error), step=0)
         pbar = tqdm(range(epochs))
         for epoch in pbar:
             batch_loss_training = []
-            if y_val is not None:
-                pbar.set_description(f"Performance Error: {np.mean(error)}")
+
             for i, (vector, y) in enumerate(dataloader):
                 vector = vector.to(self.device)
                 t = self.sample_time(vector.shape[0]).to(self.device)
@@ -168,21 +171,23 @@ class Diffusion:
                 batch_loss_training.append(loss.item())
             if y_val is not None:
                 self.model.eval()
-                error = test_performaces(
-                    y_val,
-                    self,
-                    3,
-                    df_X,
-                    df_y,
-                    display=False,
-                )
+                if epoch % 10 == 0 or epoch == 1 or trial != None:
+                    error = test_performaces(
+                        y_val,
+                        self,
+                        3,
+                        df_X,
+                        df_y,
+                        display=False,
+                    )
+                pbar.set_description(f"Performance Error: {np.mean(error)}")
                 if early_stop:
                     if np.mean(error) < (best_val_loss):
                         best_val_loss = np.mean(error)
                         counter = 0
                     else:
                         counter += 1
-                        if counter >= 5:
+                        if counter >= 100:
                             print(f"Early stop at epoch {epoch + 1}")
                             break
                 self.model.train()
@@ -193,28 +198,3 @@ class Diffusion:
                 #     raise optuna.exceptions.TrialPruned()
 
         return training_loss, error if y_val is not None else training_loss
-
-    def see_noise_data(self, x):
-
-        noise_vect, _ = self.forward_process(
-            x, torch.full((x.shape[0],), self.noise_steps - 1, device=self.device)
-        )
-
-        # Iterate over each vector tensor and plot it
-        original_matrix = x.cpu().squeeze().numpy()
-        matrix_with_noise_array = noise_vect.cpu().squeeze().numpy()
-
-        # Create a blank plot
-        # fig, ax = plt.subplots()
-
-        # Plot the original vector
-        plt.subplot(1, 2, 1)
-        plt.imshow(original_matrix, cmap="viridis", aspect="auto")
-        # plt.colorbar()
-        plt.title("VCOTA Initial Dataset")
-
-        plt.subplot(1, 2, 2)
-        plt.imshow(matrix_with_noise_array, cmap="viridis", aspect="auto")
-        plt.title("VCOTA Noisy Dataset")
-
-        plt.show()

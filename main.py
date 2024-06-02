@@ -1,7 +1,5 @@
 from requirements import *
 from dataset import (
-    reverse_normalize_values,
-    normalize_values,
     augment_data,
     normalization,
     reverse_normalization,
@@ -12,12 +10,15 @@ from Evaluations import (
     target_Predictions,
     test_performaces,
     histogram,
+    see_noise_data,
+    plot_dataset,
 )
 import seaborn as sns
 from optimization import HYPERPARAMETERS_OPT, GUIDANCE_WEIGTH_OPT
 from DDPM import Diffusion
 
 type = "MLP_skip"
+guidance = True
 
 
 def main():
@@ -36,32 +37,12 @@ def main():
         ["w8", "w6", "w4", "w10", "w1", "w0", "l8", "l6", "l4", "l10", "l1", "l0"]
     ]
     df_y = dataframe[["gdc", "idd", "gbw", "pm"]]
-    fid, ax = plt.subplots(1, 2)
-    sns.scatterplot(
-        data=df_y,
-        y="gbw",
-        x="gdc",
-        ax=ax[0],
-    )
 
-    sns.scatterplot(
-        data=df_y,
-        y="idd",
-        x="pm",
-        ax=ax[1],
-    )
-    ax[0].set_yscale("log")
-    ax[1].set_yscale("log")
-    ax[0].set_xlabel("Gain[dB]", fontsize=14)
-    ax[0].set_ylabel("Gain Bandwidth Product[Hz]", fontsize=14)
-    ax[1].set_xlabel("Phase [deg]", fontsize=14)
-    ax[1].set_ylabel("Bias Current[\\mu A]", fontsize=14)
-    plt.suptitle("VCOTA Performace Dataset", fontsize=14)
-    plt.show()
+    plot_dataset(df_y)
+
     X = normalization(df_X)
     y = normalization(df_y)
 
-    plt.show()
     print(X.shape)
     print(y.shape)
 
@@ -79,6 +60,13 @@ def main():
     # y_train,X_train = augment_data(y_train,X_train,np.array([-1,1, -1, 0]), repetition_factor=10)
 
     DDPM = Diffusion(vect_size=X.shape[1])
+    DDPM.X_norm_min = torch.tensor(
+        X.min(axis=0), device=DDPM.device, dtype=torch.float32
+    )
+    DDPM.X_norm_max = torch.tensor(
+        X.max(axis=0), device=DDPM.device, dtype=torch.float32
+    )
+
     X = torch.tensor(X, dtype=torch.float32, device=DDPM.device)
     y = torch.tensor(y, dtype=torch.float32, device=DDPM.device)
 
@@ -87,7 +75,7 @@ def main():
     X_val = torch.tensor(X_val, dtype=torch.float32, device=DDPM.device)
     y_val = torch.tensor(y_val, dtype=torch.float32, device=DDPM.device)
     y_test = torch.tensor(y_test, dtype=torch.float32, device=DDPM.device)
-
+    see_noise_data(DDPM, X_train, df_X)
     # HYPERPARAMETERS_OPT(
     #     X_train,
     #     y_train,
@@ -97,8 +85,10 @@ def main():
     #     df_y,
     #     network,
     #     type,
-    #     epoch=50,
-    #     n_trials=10,
+    #     epoch=20,
+    #     n_trials=5,
+    #     X_min=DDPM.X_norm_min,
+    #     X_max=DDPM.X_norm_max,
     # )
     with open(f"best_hyperparameters{type}.json", "r") as file:
         hyper_parameters = json.load(file)
@@ -109,10 +99,10 @@ def main():
         network,
         df_X,
         df_y,
-        X_val=X_val,
-        y_val=y_val,
+        X_val=None,
+        y_val=None,
         epochs=500,
-        early_stop=False,
+        early_stop=True,
         **hyper_parameters,
     )
     torch.save(DDPM.model.state_dict(), f"{type}.pth")
@@ -129,10 +119,15 @@ def main():
     with open(f"best_weight{type}.json", "r") as file:
         best_weight = json.load(file)["weight"]
 
-    # start_time = time.time()
+    ##### EVALUATIONS #################################
 
-    # df_Sampled.to_csv('Uncod_Sampled.csv')
-    histogram(DDPM, best_weight, y, df_X, X_train)
+    histogram(
+        DDPM,
+        best_weight,
+        y,
+        df_X,
+        X,
+    )
     Train_error(
         y_train,
         DDPM,
@@ -171,6 +166,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-    # Obter media e desvio padrao dos targets
-    # UNET MLP

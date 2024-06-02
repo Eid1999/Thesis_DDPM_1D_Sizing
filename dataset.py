@@ -109,7 +109,7 @@ def augment_data(X, y, target, repetition_factor=10, scale=0.2):
     return (X_rep, y_rep)
 
 
-def normalization(df, original=None):
+def normalization(df, original=None, type_normilization=norm):
     def standardize():
         scaler = StandardScaler()
         if original is None:
@@ -126,7 +126,7 @@ def normalization(df, original=None):
             scaler.fit(original)
             return scaler.transform(df)
 
-    if norm == "minmax":
+    if type_normilization == "minmax":
         return minmax()
     else:
         return standardize()

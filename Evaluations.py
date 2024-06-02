@@ -4,6 +4,32 @@ from dataset import (
     reverse_normalization,
 )
 from Simulator import Simulator
+import seaborn as sns
+
+
+def plot_dataset(df_y):
+    fig, ax = plt.subplots(1, 2)
+    sns.scatterplot(
+        data=df_y,
+        y="gbw",
+        x="gdc",
+        ax=ax[0],
+    )
+
+    sns.scatterplot(
+        data=df_y,
+        y="idd",
+        x="pm",
+        ax=ax[1],
+    )
+    ax[0].set_yscale("log")
+    ax[1].set_yscale("log")
+    ax[0].set_xlabel("Gain[dB]", fontsize=14)
+    ax[0].set_ylabel("Gain Bandwidth Product[Hz]", fontsize=14)
+    ax[1].set_xlabel("Phase [deg]", fontsize=14)
+    ax[1].set_ylabel("Bias Current[\\mu A]", fontsize=14)
+    plt.suptitle("VCOTA Performace Dataset", fontsize=14)
+    plt.show()
 
 
 def Train_error(
@@ -34,7 +60,7 @@ def Train_error(
     error = np.mean(
         np.abs(
             np.divide(
-                (X_train - df_Sampled),
+                (X_test - df_Sampled),
                 df_Sampled,
                 out=np.zeros_like(X_train),
                 where=(X_train != 0),
@@ -58,28 +84,42 @@ def Test_error(
     )
 
     df_Sampled = reverse_normalization(X_Sampled.cpu().numpy(), df_X)
-    X_test = reverse_normalization(X_test, df_X)
+    df_X_test = reverse_normalization(X_test, df_X)
     df_Sampled = pd.DataFrame(df_Sampled, columns=df_X.columns)
-    X_test = pd.DataFrame(X_test, columns=df_X.columns)
+    df_X_test = pd.DataFrame(df_X_test, columns=df_X.columns)
     error = np.mean(
         np.abs(
             np.divide(
-                (X_test - df_Sampled),
+                (df_X_test - df_Sampled),
                 df_Sampled,
                 out=np.zeros_like(df_Sampled),
-                where=(X_test != 0),
+                where=(df_X_test != 0),
             )
         ),
         axis=0,
     )
     print(f"\n{error}")
     plt.subplot(1, 2, 1)
-    plt.imshow(df_Sampled, cmap="viridis", aspect="auto")
+    sns.heatmap(
+        pd.DataFrame(
+            normalization(df_Sampled, original=df_X, type_normilization="minmax"),
+            columns=df_X.columns,
+        ),
+        cmap="Spectral",
+        xticklabels=True,
+    )
     # plt.colorbar()
     plt.title("VCOTA Sample Dataset")
 
     plt.subplot(1, 2, 2)
-    plt.imshow(X_test, cmap="viridis", aspect="auto")
+    sns.heatmap(
+        pd.DataFrame(
+            normalization(df_X_test, original=df_X, type_normilization="minmax"),
+            columns=df_X.columns,
+        ),
+        cmap="Spectral",
+        xticklabels=True,
+    )
     plt.title("VCOTA test Dataset")
     plt.show()
 
@@ -128,28 +168,54 @@ def target_Predictions(
 
     X_Sampled = reverse_normalization(X_Sampled.cpu().numpy(), df_X)
     X_Sampled = pd.DataFrame(X_Sampled, columns=df_X.columns)
-
-    error = np.mean(
+    error_1 = np.mean(
         np.abs(
             np.divide(
-                (y_test - y_Sampled),
-                y_test,
-                out=np.zeros_like(y_test),
-                where=(y_test != 0),
+                (y_test[:n_samples] - y_Sampled[:n_samples]),
+                y_test[:n_samples],
+                out=np.zeros_like(y_test[:n_samples]),
+                where=(y_test[:n_samples] != 0),
+            )
+        ),
+        axis=0,
+    )
+    error_2 = np.mean(
+        np.abs(
+            np.divide(
+                (
+                    y_test[n_samples : n_samples * 2]
+                    - y_Sampled[n_samples : n_samples * 2]
+                ),
+                y_test[n_samples : n_samples * 2],
+                out=np.zeros_like(y_test[n_samples : n_samples * 2]),
+                where=(y_test[n_samples : n_samples * 2] != 0),
+            )
+        ),
+        axis=0,
+    )
+    error_3 = np.mean(
+        np.abs(
+            np.divide(
+                (y_test[n_samples * 2 :] - y_Sampled[n_samples * 2 :]),
+                y_test[n_samples * 2 :],
+                out=np.zeros_like(y_test[n_samples * 2 :]),
+                where=(y_test[n_samples * 2 :] != 0),
             )
         ),
         axis=0,
     )
     if display:
-        print(f"\n{error}")
+
         print(f"\nTarget1:\n{X_Sampled[:n_samples].describe().loc[['mean', 'std']].T}")
+        print(f"Error:\n{error_1}")
         print(
             f"\nTarget2:\n{X_Sampled[n_samples:n_samples*2].describe().loc[['mean', 'std']].T}"
         )
+        print(f"Error:\n{error_2}")
         print(
             f"\nTarget3:\n{X_Sampled[n_samples*2:].describe().loc[['mean', 'std']].T}"
         )
-    return error
+        print(f"Error:\n{error_3}")
 
 
 def test_performaces(
@@ -254,4 +320,60 @@ def histogram(
         axs[1, i].set_ylim(0, y_max)
         axs[0, i].set_ylim(0, y_max)
         # axs[1, i].set_ylim(0, len(df_Sampled_hist))
+    plt.show()
+
+
+def see_noise_data(DDPM, x, df_X):
+
+    noise_vect, _ = DDPM.forward_process(
+        x, torch.full((x.shape[0],), DDPM.noise_steps - 1, device=DDPM.device)
+    )
+
+    # Iterate over each vector tensor and plot it
+    original_matrix = x.cpu().squeeze().numpy()
+    matrix_with_noise_array = noise_vect.cpu().squeeze().numpy()
+
+    # Create a blank plot
+    # fig, ax = plt.subplots()
+
+    # Plot the original vector
+    # original_matrix = reverse_normalization(original_matrix, df_X)
+    # matrix_with_noise_array = reverse_normalization(matrix_with_noise_array, df_X)
+    original_matrix = pd.DataFrame(original_matrix, columns=df_X.columns)
+    matrix_with_noise_array = pd.DataFrame(
+        matrix_with_noise_array, columns=df_X.columns
+    )
+    plt.subplot(1, 2, 1)
+    sns.heatmap(
+        pd.DataFrame(
+            # normalization(original_matrix, original=df_X, type_normilization="minmax"),
+            original_matrix,
+            columns=df_X.columns,
+        ),
+        cbar=False,
+        vmin=-1,
+        vmax=1,
+        # cmap="Spectral",
+        xticklabels=True,
+    )
+
+    # plt.colorbar()
+    plt.title("VCOTA Initial Dataset")
+
+    plt.subplot(1, 2, 2)
+    sns.heatmap(
+        pd.DataFrame(
+            # normalization(
+            #     matrix_with_noise_array, original=df_X, type_normilization="minmax"
+            # ),
+            matrix_with_noise_array,
+            columns=df_X.columns,
+        ),
+        vmin=-1,
+        vmax=1,
+        # cmap="Spectral",
+        xticklabels=True,
+    )
+    plt.title("VCOTA Noisy Dataset")
+
     plt.show()

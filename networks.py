@@ -95,7 +95,6 @@ class MLP_skip(nn.Module):
         y_dim=15,
         seed_value=0,
     ):
-
         torch.manual_seed(seed_value)
         torch.cuda.manual_seed(seed_value)
         np.random.seed(seed_value)
@@ -210,6 +209,9 @@ class SinusoidalPosEmb(nn.Module):
         half_dim = self.dim // 2
         emb = math.log(self.theta) / (half_dim - 1)
         emb = torch.exp(torch.arange(half_dim, device=device) * -emb)
-        emb = x[:, None] * emb[None, :]
+        try:
+            emb = x[:, None] * emb[None, :]
+        except IndexError:
+            emb = x[None] * emb[None, :]
         emb = torch.cat((emb.sin(), emb.cos()), dim=-1)
         return emb
