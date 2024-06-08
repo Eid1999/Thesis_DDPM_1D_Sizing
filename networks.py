@@ -37,7 +37,7 @@ class MLP(nn.Module):
                         if i < len(hidden_layers)
                         else nn.Identity()
                     ),
-                    nn.ReLU() if i < len(hidden_layers) else nn.Identity(),
+                    nn.PReLU() if i < len(hidden_layers) else nn.Identity(),
                 )
                 for i in range(len(hidden_layers) + 1)
             ]
@@ -123,7 +123,7 @@ class MLP_skip(nn.Module):
                         if i < len(hidden_layers)
                         else nn.Identity()
                     ),
-                    nn.ReLU() if i < len(hidden_layers) else nn.Identity(),
+                    nn.PReLU() if i < len(hidden_layers) else nn.Identity(),
                 )
                 for i in range(len(hidden_layers) + 1)
             ]

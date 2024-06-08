@@ -14,4 +14,5 @@ optimization_historyMLP.html
 optimization_historyMLP_skip.html
 epoch_graphSimulator.html
 epoch_graphMLP.html
-epoch_graphMLP_skip.html
+*.html
+*.pth

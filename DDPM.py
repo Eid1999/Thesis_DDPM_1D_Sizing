@@ -8,7 +8,7 @@ torch.manual_seed(0)
 class Diffusion:
     def __init__(
         self,
-        noise_steps=100,
+        noise_steps=10,
         vect_size=91,
         device="cuda",
     ):
@@ -27,7 +27,7 @@ class Diffusion:
         self.alpha = 1.0 - self.beta
         self.alpha_hat = torch.cumprod(self.alpha, dim=0)
 
-    def prepare_noise_schedule(self, s=0.008, scheduler="cosine_schedule()"):
+    def prepare_noise_schedule(self, s=0.008, scheduler="cosine_schedule"):
 
         # linear schedule
         def linear_schedule(beta_start=0.0001, beta_end=0.1):
@@ -35,7 +35,7 @@ class Diffusion:
             return torch.linspace(beta_start, beta_end, self.noise_steps)
 
         # cosine schedule
-        def cosine_schedule(scaler=0.1):
+        def cosine_schedule(scaler=0.05):
             x = torch.linspace(0, self.noise_steps, self.noise_steps + 1)
             alphas_cumprod = (
                 torch.cos(((x / self.noise_steps) + s) / (1 + s) * torch.pi * 0.5) ** 2
@@ -51,7 +51,12 @@ class Diffusion:
                 steps=self.noise_steps,
             )
 
-        return cosine_schedule()
+        noise_scheduler = {
+            "cosine_schedule": cosine_schedule,
+            "logarithmic_schedule": logarithmic_schedule,
+            "linear_schedule": linear_schedule,
+        }
+        return noise_scheduler[scheduler]()
 
     def forward_process(self, x, t):
         # p(xt|x0) := N (xt; √αtx0, (1 − αtI))
@@ -64,7 +69,7 @@ class Diffusion:
     def sample_time(self, n):
         return torch.randint(0, self.noise_steps, size=(n,), device=self.device)
 
-    def sampling(self, model, n, y, weight=3.0):
+    def sampling(self, model, n, y, weight=1.0):
         model.eval()
 
         with torch.no_grad():
@@ -129,6 +134,7 @@ class Diffusion:
         loss_type="l2",
         early_stop=True,
         trial=None,
+        guidance_weight=20,
     ):
         self.model = network(
             input_size=x.shape[1],
@@ -171,30 +177,31 @@ class Diffusion:
                 batch_loss_training.append(loss.item())
             if y_val is not None:
                 self.model.eval()
-                if epoch % 10 == 0 or epoch == 1 or trial != None:
+                if True or epoch % 50 == 0:
                     error = test_performaces(
                         y_val,
                         self,
-                        3,
+                        guidance_weight,
                         df_X,
                         df_y,
                         display=False,
                     )
+
+                    if early_stop:
+                        if np.mean(error) < (best_val_loss):
+                            best_val_loss = np.mean(error)
+                            counter = 0
+                        else:
+                            counter += 10
+                            if counter >= 10:
+                                print(f"Early stop at epoch {epoch + 1}")
+                                break
+                    if trial is not None:
+                        trial.report(np.mean(error), step=epoch + 1)
+                        # if trial.should_prune():
+                        # raise optuna.exceptions.TrialPruned()
                 pbar.set_description(f"Performance Error: {np.mean(error)}")
-                if early_stop:
-                    if np.mean(error) < (best_val_loss):
-                        best_val_loss = np.mean(error)
-                        counter = 0
-                    else:
-                        counter += 1
-                        if counter >= 100:
-                            print(f"Early stop at epoch {epoch + 1}")
-                            break
                 self.model.train()
             training_loss = np.mean(batch_loss_training)
-            if trial is not None:
-                trial.report(np.mean(error), step=epoch + 1)
-                # if trial.should_prune():
-                #     raise optuna.exceptions.TrialPruned()
 
         return training_loss, error if y_val is not None else training_loss

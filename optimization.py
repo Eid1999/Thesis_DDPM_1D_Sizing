@@ -28,15 +28,21 @@ def HYPERPARAMETERS_OPT(
     X_max=None,
 ):
     def objective(trial):
-        num_layers = trial.suggest_int("num_layers", 5, 15)
+        num_layers = trial.suggest_int("num_layers", 7, 20)
         params = {
             "hidden_layers": [
-                trial.suggest_int(f"hidden_size{i}", 20, 5000, log=True)
+                trial.suggest_int(f"hidden_size{i+1}", 800, 5000, log=True)
                 for i in range(num_layers)
             ],
-            "batch_size": trial.suggest_int("batch_size", 50, 300),
+            "batch_size": trial.suggest_int("batch_size", 100, 300),
             "learning_rate": trial.suggest_float("learning_rate", 1e-7, 1e-4, log=True),
             "loss_type": trial.suggest_categorical("loss_type", ["l1", "l2"]),
+            "guidance_weight": trial.suggest_float(
+                "guidance_weight",
+                0.1,
+                40,
+                log=True,
+            ),
         }
         DDPM = Diffusion(vect_size=X_train.shape[1])
 
@@ -50,7 +56,7 @@ def HYPERPARAMETERS_OPT(
             network,
             df_X,
             df_y,
-            epochs=epoch,
+            epochs=epoch + 1,
             X_val=X_val,
             y_val=y_val,
             **params,
@@ -69,12 +75,13 @@ def HYPERPARAMETERS_OPT(
     best_trial = study.best_trial
     best_params = {
         "hidden_layers": [
-            best_trial.params[f"hidden_size{i}"]
+            best_trial.params[f"hidden_size{i+1}"]
             for i in range(best_trial.params["num_layers"])
         ],
         "batch_size": best_trial.params["batch_size"],
         "learning_rate": best_trial.params["learning_rate"],
         "loss_type": best_trial.params["loss_type"],
+        "guidance_weight": best_trial.params["guidance_weight"],
     }
 
     plot_intermediate_values(study).update_layout(
@@ -92,10 +99,10 @@ def HYPERPARAMETERS_OPT(
         json.dump(best_params, file, indent=4)
 
 
-def GUIDANCE_WEIGTH_OPT(DDPM, y_val, df_X, df_y, type):
+def GUIDANCE_WEIGTH_OPT(DDPM, y_val, df_X, df_y, type, n_trials=50):
     def objective(trial):
         params = {
-            "weight": trial.suggest_float("weight", 0.01, 100, log=True),
+            "weight": trial.suggest_float("weight", 2, 100, log=True),
         }
         error = test_performaces(
             y_val,
@@ -112,9 +119,13 @@ def GUIDANCE_WEIGTH_OPT(DDPM, y_val, df_X, df_y, type):
     study = optuna.create_study(
         direction="minimize"
     )  # We want to minimize the objective function
-    study.optimize(objective, n_trials=20)
-    with open(f"best_weight{type}.json", "w") as file:
-        json.dump(study.best_params, file, indent=4)
+    study.optimize(objective, n_trials=n_trials)
+    with open(f"best_hyperparameters{type}.json", "r") as file:
+        hyper_parameters = json.load(file)
+    best_trial = study.best_trial
+    hyper_parameters["guidance_weight"] = best_trial.params["weight"]
+    with open(f"best_hyperparameters{type}.json", "w") as file:
+        json.dump(hyper_parameters, file, indent=4)
     x_values = []
     y_values = []
     for trial in study.trials:
@@ -135,6 +146,6 @@ def GUIDANCE_WEIGTH_OPT(DDPM, y_val, df_X, df_y, type):
 
     plt.xlabel("Weigths", fontsize=14)
     plt.ylabel("Mean Performance Error[%]", fontsize=14)
-    plt.title("Epochs=500,Noise Step=100, Scaler=0.1", fontsize=14)
+    plt.title("Epochs=500,Noise Step=100, Scaler=0.05", fontsize=14)
     # plt.xscale("log")
     plt.show()
