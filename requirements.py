@@ -22,5 +22,11 @@ import time
 import itertools
 import json
 
-from networks import MLP, MLP_skip
 import optuna
+from sklearn.preprocessing import StandardScaler
+import seaborn as sns
+import torch.optim.lr_scheduler as lr_scheduler
+
+type = "MLP_skip"
+
+norm = "standardiztion"  ## define type of normalization

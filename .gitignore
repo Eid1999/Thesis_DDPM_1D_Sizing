@@ -16,3 +16,4 @@ epoch_graphSimulator.html
 epoch_graphMLP.html
 *.html
 *.pth
+./graphs/*
