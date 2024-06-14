@@ -107,8 +107,8 @@ def main():
         df_X,
         df_y,
         X_val=X_val,
-        y_val=None,
-        epochs=500,
+        y_val=y_val,
+        epochs=501,
         early_stop=False,
         **hyper_parameters,
     )

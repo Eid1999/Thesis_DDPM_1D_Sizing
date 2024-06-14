@@ -183,7 +183,7 @@ class Diffusion:
                 batch_loss_training.append(loss.item())
             if y_val is not None:
                 self.model.eval()
-                if False or epoch % 50 == 0:
+                if False or epoch % 100 == 0:
                     error = test_performaces(
                         y_val,
                         self,
