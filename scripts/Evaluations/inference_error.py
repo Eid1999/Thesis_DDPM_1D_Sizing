@@ -1,6 +1,6 @@
 from requirements import *
-from scripts.Networks import Simulator
-from scripts.Dataset import normalization, reverse_normalization
+from Networks import Simulator
+from Dataset import normalization, reverse_normalization
 
 
 def inference_error(

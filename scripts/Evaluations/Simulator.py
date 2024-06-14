@@ -1,5 +1,5 @@
 from requirements import *
-from scripts.Dataset import normalization, reverse_normalization
+from Dataset import normalization, reverse_normalization
 
 
 def Test_error(X_test, y_test, model, original_y):

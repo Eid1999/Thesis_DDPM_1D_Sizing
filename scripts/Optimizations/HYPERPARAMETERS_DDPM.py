@@ -1,6 +1,6 @@
 from requirements import *
-from scripts.DDPM import Diffusion
-from scripts.Evaluations import test_performaces
+from DDPM import Diffusion
+from Evaluations import test_performaces
 from optuna.visualization import (
     plot_intermediate_values,
     plot_parallel_coordinate,
@@ -13,7 +13,7 @@ from optuna.visualization import (
 import seaborn as sns
 
 
-def HYPERPARAMETERS_OPT(
+def HYPERPARAMETERS_DDPM(
     X_train,
     y_train,
     X_val,

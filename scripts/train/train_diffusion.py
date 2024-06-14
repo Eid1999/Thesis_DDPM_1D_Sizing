@@ -1,9 +1,16 @@
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from requirements import *
-from scripts.Dataset import (
+from Dataset import (
     normalization,
     reverse_normalization,
 )
-from scripts.Evaluations import (
+
+
+from Evaluations import (
     Test_error,
     Train_error,
     inference_error,
@@ -13,8 +20,8 @@ from scripts.Evaluations import (
     plot_dataset,
 )
 import seaborn as sns
-from scripts.Optimizations import HYPERPARAMETERS_DDPM, GUIDANCE_WEIGTH_OPT
-from scripts.DDPM import Diffusion
+from Optimizations import HYPERPARAMETERS_DDPM, GUIDANCE_WEIGTH_OPT
+from DDPM import Diffusion
 
 
 guidance = True
@@ -85,8 +92,8 @@ def main():
     #     df_y,
     #     network,
     #     type,
-    #     epoch=100,
-    #     n_trials=10,
+    #     epoch=2,
+    #     n_trials=2,
     #     X_min=DDPM.X_norm_min,
     #     X_max=DDPM.X_norm_max,
     # )
@@ -101,7 +108,7 @@ def main():
         df_y,
         X_val=X_val,
         y_val=None,
-        epochs=1000,
+        epochs=500,
         early_stop=False,
         **hyper_parameters,
     )

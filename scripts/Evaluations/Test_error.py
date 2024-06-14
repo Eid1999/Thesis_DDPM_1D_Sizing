@@ -1,6 +1,6 @@
 from requirements import *
 
-from scripts.Dataset import normalization, reverse_normalization
+from Dataset import normalization, reverse_normalization
 
 
 def Test_error(

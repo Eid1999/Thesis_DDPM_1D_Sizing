@@ -1,5 +1,5 @@
 from requirements import *
-from scripts.Evaluations import test_performaces
+from Evaluations import test_performaces
 
 
 torch.manual_seed(0)

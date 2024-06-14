@@ -1,14 +1,14 @@
 from requirements import *
 
 
-from scripts.Dataset import (
+from Dataset import (
     normalization,
     reverse_normalization,
 )
-from scripts.Networks import Simulator
-from scripts.Optimizations import HYPERPARAMETERS_SIMULATOR
-from scripts.utils.Simulator import epoch_loop
-from scripts.Evaluations.Simulator import Test_error
+from Networks import Simulator
+from Optimizations import HYPERPARAMETERS_SIMULATOR
+from utils.Simulator import epoch_loop
+from Evaluations.Simulator import Test_error
 
 
 def main():

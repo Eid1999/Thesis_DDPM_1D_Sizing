@@ -17,3 +17,12 @@ epoch_graphMLP.html
 *.html
 *.pth
 ./graphs/*
+scripts/*/__pycache__/*.pth
+scripts/__pycache__/*.pth
+scripts/__pycache__/*.cpython-310.pyc
+scripts/Dataset/__pycache__/*.cpython-310.pyc
+scripts/Evaluations/__pycache__/*.cpython-310.pyc
+scripts/Networks/__pycache__/*.cpython-310.pyc
+scripts/Optimizations/__pycache__/*.cpython-310.pyc
+scripts/utils/__pycache__/*.cpython-310.pyc
+scripts/train/__pycache__/*.cpython-310.pyc

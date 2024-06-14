@@ -14,9 +14,8 @@ class Simulator(nn.Module):
         np.random.seed(seed_value)
         torch.manual_seed(0)
 
-        # Define hidden layer sizes (you can adjust these)
         super(Simulator, self).__init__()
-        # Create a list of linear layers for hidden layers
+
         self.hidden_layers = nn.ModuleList(
             [
                 nn.Linear(
@@ -32,10 +31,8 @@ class Simulator(nn.Module):
         )
         self.activation_layer = nn.ReLU()
 
-        # Output layer
-
     def forward(self, x):
-        # Pass through hidden layers with activation function (e.g., ReLU)
+
         for i, layer in enumerate(self.hidden_layers):
             x = (
                 self.activation_layer(layer(x))
@@ -43,5 +40,4 @@ class Simulator(nn.Module):
                 else layer(x)
             )
 
-        # Output layer without activation (depends on loss function)
         return x

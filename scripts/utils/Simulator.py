@@ -1,5 +1,5 @@
 from requirements import *
-from scripts.Networks import Simulator
+from Networks import Simulator
 
 
 def Eval_loop(X, y, model, loss_fn):

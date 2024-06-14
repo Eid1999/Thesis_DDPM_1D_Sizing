@@ -1,6 +1,6 @@
 from requirements import *
-from scripts.DDPM import Diffusion
-from scripts.Evaluations import test_performaces
+from DDPM import Diffusion
+from Evaluations import test_performaces
 from optuna.visualization import (
     plot_intermediate_values,
     plot_parallel_coordinate,
@@ -11,7 +11,7 @@ from optuna.visualization import (
     plot_edf,
 )
 import seaborn as sns
-from scripts.utils.Simulator import epoch_loop
+from utils.Simulator import epoch_loop
 
 
 def HYPERPARAMETERS_OPT(X_train, y_train, X_val, y_val):
