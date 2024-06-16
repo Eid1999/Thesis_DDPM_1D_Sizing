@@ -31,14 +31,14 @@ def inference_error(
     X_Sampled = DDPM.sampling(
         DDPM.model.cuda(), y_test_norm.shape[0], y_test_norm, weight=best_weight
     )
-    with open("best_simulator.json", "r") as file:
+    with open("./templates/best_simulator.json", "r") as file:
         hyper_parameters = json.load(file)
     simulator = Simulator(
         df_X.shape[-1],
         df_y.shape[-1],
         hidden_layers=hyper_parameters["hidden_layers"],
     ).to("cuda")
-    simulator.load_state_dict(torch.load("Simulator.pth"))
+    simulator.load_state_dict(torch.load("./weights/Simulator.pth"))
 
     y_Sampled = simulator(X_Sampled)
 

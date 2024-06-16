@@ -6,20 +6,27 @@ torch.manual_seed(0)
 
 
 class Diffusion:
+
     def __init__(
         self,
-        noise_steps=500,
+        noise_steps=1000,
         vect_size=91,
         device="cuda",
+        X_norm_max=[1] * 12,
+        X_norm_min=[1] * 12,
     ):
         self.noise_steps = noise_steps
         self.vect_size = vect_size
         self.device = device
         self.X_norm_max = torch.tensor(
-            [1] * 12, device=self.device, dtype=torch.float32
+            X_norm_max,
+            device=self.device,
+            dtype=torch.float32,
         )
         self.X_norm_min = torch.tensor(
-            [-1] * 12, device=self.device, dtype=torch.float32
+            X_norm_min,
+            device=self.device,
+            dtype=torch.float32,
         )
 
         self.beta = self.prepare_noise_schedule().to(device)
@@ -39,7 +46,6 @@ class Diffusion:
 
         # cosine schedule
         def cosine_schedule(
-            scaler=1,
             s=0.008,
         ):
             x = torch.linspace(0, self.noise_steps, self.noise_steps + 1)
@@ -48,7 +54,7 @@ class Diffusion:
             )
             alphas_cumprod = alphas_cumprod / alphas_cumprod[0]
             betas = 1 - (alphas_cumprod[1:] / alphas_cumprod[:-1])
-            return torch.clip(betas, 0.0001, 0.99999) * scaler
+            return torch.clip(betas, 0.0001, 0.99999)
 
         def logarithmic_schedule(beta_start=0.0001, beta_end=0.02):
             return torch.logspace(
@@ -183,7 +189,7 @@ class Diffusion:
                 batch_loss_training.append(loss.item())
             if y_val is not None:
                 self.model.eval()
-                if False or epoch % 100 == 0:
+                if False or epoch % 50 == 0:
                     error = test_performaces(
                         y_val,
                         self,

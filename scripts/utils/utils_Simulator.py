@@ -37,7 +37,11 @@ def epoch_loop(
         y_train.shape[-1],
         hidden_layers=hidden_layers,
     ).to("cuda")
-    optimizer = optim.Adam(model.parameters(), lr=lr)
+    optimizer = optim.Adam(
+        model.parameters(),
+        lr=lr,
+        weight_decay=1e-5,
+    )
     patience = 0
     dataloader = DataLoader(
         TensorDataset(X_train, y_train), batch_size=batch_size, shuffle=True
@@ -51,7 +55,7 @@ def epoch_loop(
         Train_loop(dataloader, model, optimizer, loss_fn)
         scheduler.step()
         if trial is not None:
-            trial.report(val_loss, step=epoch)
+            trial.report(val_loss, step=epoch + 1)
             if trial.should_prune():
                 raise optuna.exceptions.TrialPruned()
 
@@ -61,6 +65,6 @@ def epoch_loop(
             patience = 0
         else:
             patience += 1
-            if patience == 5:
+            if patience == 10:
                 break
     return model, val_loss

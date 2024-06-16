@@ -18,7 +18,7 @@ def see_noise_data(DDPM, x, df_X):
         )
     )
     plt.suptitle("Error added by Noise Step", fontsize=14)
-    axs[0].set_title(f"Noise Step Percentage:{0}%", fontsize=14)
+    axs[0].set_title(f"Noise:0%, Mean Error:0", fontsize=14)
     sns.heatmap(
         pd.DataFrame(
             # normalization(original_matrix, original=df_X, type_normalization="minmax"),

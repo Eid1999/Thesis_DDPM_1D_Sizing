@@ -1,3 +1,7 @@
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from requirements import *
 
 
@@ -7,7 +11,7 @@ from Dataset import (
 )
 from Networks import Simulator
 from Optimizations import HYPERPARAMETERS_SIMULATOR
-from utils.Simulator import epoch_loop
+from utils.utils_Simulator import epoch_loop
 from Evaluations.Simulator import Test_error
 
 
@@ -30,12 +34,14 @@ def main():
     X_test = torch.tensor(x_test, dtype=torch.float32, device=device)
     y_test = torch.tensor(y_test, dtype=torch.float32, device=device)
 
-    HYPERPARAMETERS_SIMULATOR(
-        X_train,
-        y_train,
-        X_val,
-        y_val,
-    )
+    # HYPERPARAMETERS_SIMULATOR(
+    #     X_train,
+    #     y_train,
+    #     X_val,
+    #     y_val,
+    #     num_trials=50,
+    #     num_epochs=100,
+    # )
 
     with open("./templates/best_simulator.json", "r") as file:
         hyper_parameters = json.load(file)
@@ -45,7 +51,7 @@ def main():
         X_val,
         y_val,
         **hyper_parameters,
-        n_epoch=100,
+        n_epoch=500,
     )
     Test_error(X_test, y_test, model, df_y.values)
     torch.save(model.state_dict(), "./weights/Simulator.pth")

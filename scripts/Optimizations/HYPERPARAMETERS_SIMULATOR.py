@@ -11,12 +11,19 @@ from optuna.visualization import (
     plot_edf,
 )
 import seaborn as sns
-from utils.Simulator import epoch_loop
+from utils.utils_Simulator import epoch_loop
 
 
-def HYPERPARAMETERS_OPT(X_train, y_train, X_val, y_val):
+def HYPERPARAMETERS_OPT(
+    X_train,
+    y_train,
+    X_val,
+    y_val,
+    num_trials=20,
+    num_epochs=100,
+):
     def objective(trial):
-        num_layers = trial.suggest_int("num_layers", 2, 20)
+        num_layers = trial.suggest_int("num_layers", 2, 10)
         params = {
             "hidden_layers": [
                 trial.suggest_int(
@@ -46,7 +53,7 @@ def HYPERPARAMETERS_OPT(X_train, y_train, X_val, y_val):
             X_val,
             y_val,
             **params,
-            n_epoch=100,
+            n_epoch=num_epochs,
             trial=trial,
         )
 
@@ -55,9 +62,11 @@ def HYPERPARAMETERS_OPT(X_train, y_train, X_val, y_val):
     study = optuna.create_study(
         direction="minimize",
         sampler=optuna.samplers.TPESampler(seed=0),
-        pruner=optuna.pruners.SuccessiveHalvingPruner(),
+        pruner=optuna.pruners.SuccessiveHalvingPruner(
+            min_early_stopping_rate=10,
+        ),
     )
-    study.optimize(objective, n_trials=20)
+    study.optimize(objective, n_trials=num_trials)
     best_trial = study.best_trial
     best_params = {
         "hidden_layers": [
@@ -70,13 +79,15 @@ def HYPERPARAMETERS_OPT(X_train, y_train, X_val, y_val):
     plot_intermediate_values(study).update_layout(
         xaxis_title="Epoch",
         yaxis_title="Validation Loss",
-    ).write_html(f"epoch_graphSimulator.html")
-    plot_timeline(study).write_html("plot_timelineSimulator.html")
+    ).write_html(f"./html_graphs/epoch_graphSimulator.html")
+    plot_timeline(study).write_html("./html_graphs/plot_timelineSimulator.html")
     # plot_parallel_coordinate(study).write_html("parallel_coordinate.html")
-    plot_param_importances(study).write_html("param_importancesSimulator.html")
+    plot_param_importances(study).write_html(
+        "./html_graphs/param_importancesSimulator.html"
+    )
     plot_optimization_history(study).update_layout(
         xaxis_title="Trials",
         yaxis_title="Validation Loss",
-    ).write_html(f"optimization_historySimulator.html")
-    with open("best_simulator.json", "w") as file:
+    ).write_html(f"./html_graphs/optimization_historySimulator.html")
+    with open("./templates/best_simulator.json", "w") as file:
         json.dump(best_params, file, indent=4)

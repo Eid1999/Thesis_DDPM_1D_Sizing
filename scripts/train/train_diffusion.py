@@ -41,9 +41,29 @@ def main():
 
     dataframe = pd.read_csv("./data/vcota.csv")
     df_X = dataframe[
-        ["w8", "w6", "w4", "w10", "w1", "w0", "l8", "l6", "l4", "l10", "l1", "l0"]
+        [
+            "w8",
+            "w6",
+            "w4",
+            "w10",
+            "w1",
+            "w0",
+            "l8",
+            "l6",
+            "l4",
+            "l10",
+            "l1",
+            "l0",
+        ]
     ]
-    df_y = dataframe[["gdc", "idd", "gbw", "pm"]]
+    df_y = dataframe[
+        [
+            "gdc",
+            "idd",
+            "gbw",
+            "pm",
+        ]
+    ]
 
     # plot_dataset(df_y)
 
@@ -65,13 +85,48 @@ def main():
     )
 
     # y_train,X_train = augment_data(y_train,X_train,np.array([-1,1, -1, 0]), repetition_factor=10)
-
-    DDPM = Diffusion(vect_size=X.shape[1])
-    DDPM.X_norm_min = torch.tensor(
-        X.min(axis=0), device=DDPM.device, dtype=torch.float32
+    norm_min = normalization(
+        np.array(
+            [
+                1e-6,
+                1e-6,
+                1e-6,
+                1e-6,
+                1e-6,
+                1e-6,
+                0.34e-6,
+                0.34e-6,
+                0.34e-6,
+                0.34e-6,
+                0.34e-6,
+                0.34e-6,
+            ]
+        )[None],
+        original=df_X.values,
     )
-    DDPM.X_norm_max = torch.tensor(
-        X.max(axis=0), device=DDPM.device, dtype=torch.float32
+    norm_max = normalization(
+        np.array(
+            [
+                100e-6,
+                100e-6,
+                100e-6,
+                100e-6,
+                100e-6,
+                100e-6,
+                0.94e-6,
+                0.94e-6,
+                0.94e-6,
+                0.94e-6,
+                0.94e-6,
+                0.94e-6,
+            ]
+        )[None],
+        original=df_X.values,
+    )
+    DDPM = Diffusion(
+        vect_size=X.shape[1],
+        X_norm_max=norm_max,
+        X_norm_min=norm_min,
     )
 
     X = torch.tensor(X, dtype=torch.float32, device=DDPM.device)
@@ -92,27 +147,27 @@ def main():
     #     df_y,
     #     network,
     #     type,
-    #     epoch=2,
-    #     n_trials=2,
+    #     epoch=500,
+    #     n_trials=10,
     #     X_min=DDPM.X_norm_min,
     #     X_max=DDPM.X_norm_max,
     # )
     with open(f"./templates/best_hyperparameters{type}.json", "r") as file:
         hyper_parameters = json.load(file)
 
-    DDPM.reverse_process(
-        X,
-        y,
-        network,
-        df_X,
-        df_y,
-        X_val=X_val,
-        y_val=y_val,
-        epochs=501,
-        early_stop=False,
-        **hyper_parameters,
-    )
-    torch.save(DDPM.model.state_dict(), f"./weights/{type}.pth")
+    # DDPM.reverse_process(
+    #     X,
+    #     y,
+    #     network,
+    #     df_X,
+    #     df_y,
+    #     X_val=X_val,
+    #     y_val=y_val,
+    #     epochs=1000,
+    #     early_stop=False,
+    #     **hyper_parameters,
+    # )
+    # torch.save(DDPM.model.state_dict(), f"./weights/{type}.pth")
 
     DDPM.model = network(
         input_size=X.shape[1],
@@ -121,7 +176,7 @@ def main():
         hidden_layers=hyper_parameters["hidden_layers"],
     )
     DDPM.model.load_state_dict(torch.load(f"./weights/{type}.pth"))
-    GUIDANCE_WEIGTH_OPT(DDPM, y_val, df_X, df_y, type)
+    # GUIDANCE_WEIGTH_OPT(DDPM, y_val, df_X, df_y, type)
     with open(f"./templates/best_hyperparameters{type}.json", "r") as file:
         hyper_parameters = json.load(file)
     ##### EVALUATIONS #################################

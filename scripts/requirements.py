@@ -27,6 +27,6 @@ from sklearn.preprocessing import StandardScaler
 import seaborn as sns
 import torch.optim.lr_scheduler as lr_scheduler
 
-type = "MLP_skip"
+type = "MLP"
 
 norm = "standardiztion"  ## define type of normalization

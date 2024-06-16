@@ -65,21 +65,21 @@ class MLP_skip(nn.Module):
         )
         self.y_vectorization = nn.ModuleList(
             [
-                nn.Sequential(
-                    nn.Linear(y_dim, y_dim * 4),
-                    nn.GELU(),
-                    nn.Linear(
-                        y_dim * 4,
-                        out_features=(
-                            input_size
-                            if i == 0
-                            else (
-                                hidden_layers[i - 1]
-                                if i - 1 < len(hidden_layers) / 2
-                                else hidden_layers[i - 1] + hidden_layers[-i]
-                            )
-                        ),
+                # nn.Sequential(
+                # nn.Linear(y_dim, y_dim * 4),
+                # nn.GELU(),
+                nn.Linear(
+                    y_dim,
+                    out_features=(
+                        input_size
+                        if i == 0
+                        else (
+                            hidden_layers[i - 1]
+                            if i - 1 < len(hidden_layers) / 2
+                            else hidden_layers[i - 1] + hidden_layers[-i]
+                        )
                     ),
+                    # ),
                 )
                 for i in range(len(hidden_layers) + 1)
             ]
@@ -98,7 +98,7 @@ class MLP_skip(nn.Module):
         ):
             t_aux = time_embedding(t)
             if y is not None:
-                t_aux += y_vectorization(y)
+                t_aux *= y_vectorization(y)
             x = (
                 hidden_layer(x + t_aux)
                 if i - 1 < len(self.hidden_layers) // 2

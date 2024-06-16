@@ -34,11 +34,11 @@ def GUIDANCE_WEIGTH_OPT(DDPM, y_val, df_X, df_y, type, n_trials=50):
         direction="minimize"
     )  # We want to minimize the objective function
     study.optimize(objective, n_trials=n_trials)
-    with open(f"best_hyperparameters{type}.json", "r") as file:
+    with open(f"./templates/best_hyperparameters{type}.json", "r") as file:
         hyper_parameters = json.load(file)
     best_trial = study.best_trial
     hyper_parameters["guidance_weight"] = best_trial.params["weight"]
-    with open(f"best_hyperparameters{type}.json", "w") as file:
+    with open(f"./templates/best_hyperparameters{type}.json", "w") as file:
         json.dump(hyper_parameters, file, indent=4)
     x_values = []
     y_values = []

@@ -1,7 +1,7 @@
 from .MLP import MLP
 from .MLP_skip import MLP_skip
 from .SinEmbPos import SinusoidalPosEmb
-from .Simulator import Simulator
+from .MLP_Simulator import Simulator
 import sys
 import os
 

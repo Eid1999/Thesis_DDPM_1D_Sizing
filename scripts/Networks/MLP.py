@@ -50,14 +50,14 @@ class MLP(nn.Module):
         )
         self.y_vectorization = nn.ModuleList(
             [
-                nn.Sequential(
-                    nn.Linear(y_dim, y_dim * 4),
-                    nn.GELU(),
-                    nn.Linear(
-                        y_dim * 4,
-                        out_features=input_size if i == 0 else hidden_layers[i - 1],
-                    ),
+                # nn.Sequential(
+                # nn.Linear(y_dim, y_dim * 4),
+                # nn.GELU(),
+                nn.Linear(
+                    y_dim,
+                    out_features=input_size if i == 0 else hidden_layers[i - 1],
                 )
+                # )
                 for i in range(len(hidden_layers) + 1)
             ]
         )

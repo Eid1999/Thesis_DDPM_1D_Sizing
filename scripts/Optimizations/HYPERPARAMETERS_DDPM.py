@@ -28,21 +28,33 @@ def HYPERPARAMETERS_DDPM(
     X_max=None,
 ):
     def objective(trial):
-        num_layers = trial.suggest_int("num_layers", 7, 20)
+        num_layers = trial.suggest_int("num_layers", 7, 30)
         params = {
             "hidden_layers": [
                 trial.suggest_int(f"hidden_size{i+1}", 800, 5000, log=True)
                 for i in range(num_layers)
             ],
-            "batch_size": trial.suggest_int("batch_size", 100, 300),
-            "learning_rate": trial.suggest_float("learning_rate", 1e-7, 1e-4, log=True),
-            "loss_type": trial.suggest_categorical("loss_type", ["l1", "l2"]),
-            "guidance_weight": trial.suggest_float(
-                "guidance_weight",
-                0.1,
-                40,
+            "batch_size": trial.suggest_int(
+                "batch_size",
+                70,
+                300,
+            ),
+            "learning_rate": trial.suggest_float(
+                "learning_rate",
+                1e-7,
+                1e-4,
                 log=True,
             ),
+            "loss_type": trial.suggest_categorical(
+                "loss_type",
+                ["l1", "l2"],
+            ),
+            # "guidance_weight": trial.suggest_float(
+            #     "guidance_weight",
+            #     0.1,
+            #     40,
+            #     log=True,
+            # ),
         }
         DDPM = Diffusion(vect_size=X_train.shape[1])
 
@@ -81,7 +93,7 @@ def HYPERPARAMETERS_DDPM(
         "batch_size": best_trial.params["batch_size"],
         "learning_rate": best_trial.params["learning_rate"],
         "loss_type": best_trial.params["loss_type"],
-        "guidance_weight": best_trial.params["guidance_weight"],
+        # "guidance_weight": best_trial.params["guidance_weight"],
     }
 
     plot_intermediate_values(study).update_layout(
