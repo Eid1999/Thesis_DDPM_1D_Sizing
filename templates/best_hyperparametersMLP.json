@@ -54,6 +54,6 @@
     "batch_size": 216,
     "learning_rate": 2.3335221623832246e-07,
     "loss_type": "l2",
-    "noise_steps": 10,
+    "noise_steps": 50,
     "guidance_weight": 81.122185
 }
