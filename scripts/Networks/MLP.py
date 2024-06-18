@@ -1,5 +1,6 @@
 from requirements import *
 from Networks.SinEmbPos import SinusoidalPosEmb
+from Networks.attention import SelfAttention
 
 
 class MLP(nn.Module):
@@ -12,6 +13,7 @@ class MLP(nn.Module):
         dim=6,
         y_dim=15,
         seed_value=0,
+        attention_layers=[10],
     ):
 
         torch.manual_seed(seed_value)
@@ -23,13 +25,18 @@ class MLP(nn.Module):
             [
                 nn.Sequential(
                     nn.Linear(
-                        in_features=input_size if i == 0 else hidden_layers[i - 1],
+                        in_features=input_size if i == 0 else attention_layers[i - 1],
                         out_features=(
                             hidden_layers[i] if i < len(hidden_layers) else output_size
                         ),
                     ),
                     (
                         nn.LayerNorm(hidden_layers[i])
+                        if i < len(hidden_layers)
+                        else nn.Identity()
+                    ),
+                    (
+                        SelfAttention(hidden_layers[i], attention_layers[i])
                         if i < len(hidden_layers)
                         else nn.Identity()
                     ),
@@ -43,19 +50,16 @@ class MLP(nn.Module):
         self.time_embedding = nn.ModuleList(
             [
                 SinusoidalPosEmb(
-                    dim=(input_size if i == 0 else hidden_layers[i - 1],),
+                    dim=(input_size if i == 0 else attention_layers[i - 1]),
                 )
                 for i in range(len(hidden_layers) + 1)
             ]
         )
         self.y_vectorization = nn.ModuleList(
             [
-                # nn.Sequential(
-                # nn.Linear(y_dim, y_dim * 4),
-                # nn.GELU(),
                 nn.Linear(
                     y_dim,
-                    out_features=input_size if i == 0 else hidden_layers[i - 1],
+                    out_features=input_size if i == 0 else attention_layers[i - 1],
                 )
                 # )
                 for i in range(len(hidden_layers) + 1)

@@ -13,7 +13,7 @@ from optuna.visualization import (
 import seaborn as sns
 
 
-def GUIDANCE_WEIGTH_OPT(DDPM, y_val, df_X, df_y, type, n_trials=50):
+def GUIDANCE_WEIGTH_OPT(DDPM, y_val, df_X, df_y, type, n_trials=2):
     def objective(trial):
         params = {
             "weight": trial.suggest_float("weight", 2, 100, log=True),
@@ -44,7 +44,7 @@ def GUIDANCE_WEIGTH_OPT(DDPM, y_val, df_X, df_y, type, n_trials=50):
     y_values = []
     for trial in study.trials:
         x_values.append(trial.params["weight"])
-        values = trial.values if trial.values != None else 0  # x-axis value
+        values = trial.values[0] if trial.values != None else 0  # x-axis value
         y_values.append(values * 100)
     data = {
         "Weigths": x_values,
@@ -64,3 +64,5 @@ def GUIDANCE_WEIGTH_OPT(DDPM, y_val, df_X, df_y, type, n_trials=50):
     plt.title("Epochs=500,Noise Step=100, Scaler=0.05", fontsize=14)
     # plt.xscale("log")
     plt.show()
+
+    return hyper_parameters

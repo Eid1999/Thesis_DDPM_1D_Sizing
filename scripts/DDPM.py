@@ -9,7 +9,7 @@ class Diffusion:
 
     def __init__(
         self,
-        noise_steps=1000,
+        noise_steps=50,
         vect_size=91,
         device="cuda",
         X_norm_max=[1] * 12,
@@ -91,7 +91,6 @@ class Diffusion:
             for i in reversed(range(0, self.noise_steps)):
                 t = (torch.ones(n) * i).long().to(self.device)
                 alpha = self.alpha[t][:, None]
-                sqrt_alpha_hat = torch.sqrt(self.alpha_hat[t])[:, None]
                 sqrt_one_minus_alpha_hat = torch.sqrt(1 - self.alpha_hat[t])[:, None]
                 beta = self.beta[t][:, None]
                 z = (
@@ -147,12 +146,15 @@ class Diffusion:
         early_stop=True,
         trial=None,
         guidance_weight=20,
+        attention_layers=[80],
+        noise_steps=None,
     ):
         self.model = network(
             input_size=x.shape[1],
             output_size=x.shape[1],
             y_dim=y.shape[-1],
             hidden_layers=hidden_layers,
+            attention_layers=attention_layers,
         ).to(self.device)
         optimizer = optim.Adam(
             self.model.parameters(),
@@ -189,7 +191,7 @@ class Diffusion:
                 batch_loss_training.append(loss.item())
             if y_val is not None:
                 self.model.eval()
-                if False or epoch % 50 == 0:
+                if False or epoch % 100 == 0:
                     error = test_performaces(
                         y_val,
                         self,
@@ -212,8 +214,9 @@ class Diffusion:
                         trial.report(np.mean(error), step=epoch + 1)
                         # if trial.should_prune():
                         # raise optuna.exceptions.TrialPruned()
-                pbar.set_description(f"Performance Error: {np.mean(error)}")
+                pbar.set_description(f"Performance Error: {np.mean(error):.4f}")
                 self.model.train()
             training_loss = np.mean(batch_loss_training)
-
+        if trial is None:
+            torch.save(self.model.state_dict(), f"./weights/{type}.pth")
         return training_loss, error if y_val is not None else training_loss

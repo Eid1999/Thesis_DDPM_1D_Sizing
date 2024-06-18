@@ -34,6 +34,10 @@ def HYPERPARAMETERS_DDPM(
                 trial.suggest_int(f"hidden_size{i+1}", 800, 5000, log=True)
                 for i in range(num_layers)
             ],
+            "attention_layers": [
+                trial.suggest_int(f"attention_size{i+1}", 100, 1000, log=True)
+                for i in range(num_layers)
+            ],
             "batch_size": trial.suggest_int(
                 "batch_size",
                 70,
@@ -85,9 +89,15 @@ def HYPERPARAMETERS_DDPM(
     )
     study.optimize(objective, n_trials=n_trials)  # type: ignore
     best_trial = study.best_trial
+    with open(f"./templates/best_hyperparameters{type}.json", "r") as file:
+        data = json.load(file)
     best_params = {
         "hidden_layers": [
             best_trial.params[f"hidden_size{i+1}"]
+            for i in range(best_trial.params["num_layers"])
+        ],
+        "attention_layers": [
+            best_trial.params[f"attention_size{i+1}"]
             for i in range(best_trial.params["num_layers"])
         ],
         "batch_size": best_trial.params["batch_size"],
@@ -95,6 +105,9 @@ def HYPERPARAMETERS_DDPM(
         "loss_type": best_trial.params["loss_type"],
         # "guidance_weight": best_trial.params["guidance_weight"],
     }
+    data.update(best_params)
+    with open(f"./templates/best_hyperparameters{type}.json", "w") as file:
+        json.dump(data, file, indent=4)
 
     plot_intermediate_values(study).update_layout(
         xaxis_title="Epoch",
@@ -109,5 +122,4 @@ def HYPERPARAMETERS_DDPM(
         xaxis_title="Trials",
         yaxis_title="Mean Performace Error",
     ).write_html(f"./html_graphs/optimization_history{type}.html")
-    with open(f"./templates/best_hyperparameters{type}.json", "w") as file:
-        json.dump(best_params, file, indent=4)
+    return data

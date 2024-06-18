@@ -30,12 +30,6 @@ from Networks import MLP, MLP_skip
 
 def main():
     network = MLP if type == "MLP" else MLP_skip
-    hyper_parameters = {
-        "hidden_layers": [60],
-        "learning_rate": 0.00001,
-        "loss_type": "l2",
-    }
-    best_weight = 10
 
     ############################### VCOTA DATASET #############################
 
@@ -70,9 +64,6 @@ def main():
     X = normalization(df_X)
     y = normalization(df_y)
 
-    print(X.shape)
-    print(y.shape)
-
     X_train, X_test, y_train, y_test = train_test_split(
         X,
         y,
@@ -84,7 +75,6 @@ def main():
         test_size=0.5,
     )
 
-    # y_train,X_train = augment_data(y_train,X_train,np.array([-1,1, -1, 0]), repetition_factor=10)
     norm_min = normalization(
         np.array(
             [
@@ -123,10 +113,14 @@ def main():
         )[None],
         original=df_X.values,
     )
+    with open(f"./templates/best_hyperparameters{type}.json", "r") as file:
+        hyper_parameters = json.load(file)
+
     DDPM = Diffusion(
         vect_size=X.shape[1],
         X_norm_max=norm_max,
         X_norm_min=norm_min,
+        noise_steps=hyper_parameters["noise_steps"],
     )
 
     X = torch.tensor(X, dtype=torch.float32, device=DDPM.device)
@@ -137,8 +131,8 @@ def main():
     X_val = torch.tensor(X_val, dtype=torch.float32, device=DDPM.device)
     y_val = torch.tensor(y_val, dtype=torch.float32, device=DDPM.device)
     y_test = torch.tensor(y_test, dtype=torch.float32, device=DDPM.device)
-    see_noise_data(DDPM, X_train, df_X)
-    # HYPERPARAMETERS_DDPM(
+    # see_noise_data(DDPM, X_train, df_X)
+    # hyper_parameters = HYPERPARAMETERS_DDPM(
     #     X_train,
     #     y_train,
     #     X_val,
@@ -147,38 +141,35 @@ def main():
     #     df_y,
     #     network,
     #     type,
-    #     epoch=500,
-    #     n_trials=10,
+    #     epoch=200,
+    #     n_trials=50,
     #     X_min=DDPM.X_norm_min,
     #     X_max=DDPM.X_norm_max,
     # )
-    with open(f"./templates/best_hyperparameters{type}.json", "r") as file:
-        hyper_parameters = json.load(file)
 
-    # DDPM.reverse_process(
-    #     X,
-    #     y,
-    #     network,
-    #     df_X,
-    #     df_y,
-    #     X_val=X_val,
-    #     y_val=y_val,
-    #     epochs=1000,
-    #     early_stop=False,
-    #     **hyper_parameters,
-    # )
-    # torch.save(DDPM.model.state_dict(), f"./weights/{type}.pth")
+    DDPM.reverse_process(
+        X,
+        y,
+        network,
+        df_X,
+        df_y,
+        X_val=X_val,
+        y_val=y_val,
+        epochs=5000,
+        early_stop=False,
+        **hyper_parameters,
+    )
 
     DDPM.model = network(
         input_size=X.shape[1],
         output_size=X.shape[1],
         y_dim=y.shape[-1],
         hidden_layers=hyper_parameters["hidden_layers"],
+        attention_layers=hyper_parameters["attention_layers"],
     )
     DDPM.model.load_state_dict(torch.load(f"./weights/{type}.pth"))
-    # GUIDANCE_WEIGTH_OPT(DDPM, y_val, df_X, df_y, type)
-    with open(f"./templates/best_hyperparameters{type}.json", "r") as file:
-        hyper_parameters = json.load(file)
+    # hyper_parameters = GUIDANCE_WEIGTH_OPT(DDPM, y_val, df_X, df_y, type)
+
     ##### EVALUATIONS #################################
 
     histogram(
@@ -220,8 +211,6 @@ def main():
         df_y,
         display=True,
     )
-
-    # Calculate mean squared error
 
 
 if __name__ == "__main__":

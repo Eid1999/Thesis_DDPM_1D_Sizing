@@ -1,5 +1,6 @@
 from requirements import *
 from Networks.SinEmbPos import SinusoidalPosEmb
+from Networks.attention import SelfAttention, MultiheadAttention
 
 
 class MLP_skip(nn.Module):
@@ -12,6 +13,7 @@ class MLP_skip(nn.Module):
         dim=6,
         y_dim=15,
         seed_value=0,
+        attention_layers=[10],
     ):
         torch.manual_seed(seed_value)
         torch.cuda.manual_seed(seed_value)
@@ -27,9 +29,9 @@ class MLP_skip(nn.Module):
                             input_size
                             if i == 0
                             else (
-                                hidden_layers[i - 1]
+                                attention_layers[i - 1]
                                 if i - 1 < len(hidden_layers) / 2
-                                else hidden_layers[i - 1] + hidden_layers[-i]
+                                else attention_layers[i - 1] + attention_layers[-i]
                             )
                         ),
                         out_features=(
@@ -38,6 +40,11 @@ class MLP_skip(nn.Module):
                     ),
                     (
                         nn.LayerNorm(hidden_layers[i])
+                        if i < len(hidden_layers)
+                        else nn.Identity()
+                    ),
+                    (
+                        SelfAttention(hidden_layers[i], attention_layers[i])
                         if i < len(hidden_layers)
                         else nn.Identity()
                     ),
@@ -54,9 +61,9 @@ class MLP_skip(nn.Module):
                         input_size
                         if i == 0
                         else (
-                            hidden_layers[i - 1]
+                            attention_layers[i - 1]
                             if i - 1 < len(hidden_layers) / 2
-                            else hidden_layers[i - 1] + hidden_layers[-i]
+                            else attention_layers[i - 1] + attention_layers[-i]
                         )
                     ),
                 )
@@ -74,9 +81,9 @@ class MLP_skip(nn.Module):
                         input_size
                         if i == 0
                         else (
-                            hidden_layers[i - 1]
+                            attention_layers[i - 1]
                             if i - 1 < len(hidden_layers) / 2
-                            else hidden_layers[i - 1] + hidden_layers[-i]
+                            else attention_layers[i - 1] + attention_layers[-i]
                         )
                     ),
                     # ),
