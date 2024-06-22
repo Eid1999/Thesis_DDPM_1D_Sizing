@@ -10,6 +10,6 @@
     ],
     "batch_size": 188,
     "learning_rate": 9.228295957427455e-05,
-    "loss_type": "l2",
+    "loss_type": "mse",
     "guidance_weight":  4.5416
 }

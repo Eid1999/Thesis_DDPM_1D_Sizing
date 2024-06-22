@@ -120,7 +120,7 @@ class Diffusion:
         return x
 
     def select_loss(self, type):
-        if type == "l2":
+        if type == "mse":
             return nn.MSELoss(reduction="mean")
         elif type == "l1":
             return nn.L1Loss(reduction="mean")
@@ -136,18 +136,20 @@ class Diffusion:
         network,
         df_X,
         df_y,
+        type,
         epochs=1000,
         batch_size=32,
         X_val=None,
         y_val=None,
         hidden_layers=[80],
         learning_rate=1e-5,
-        loss_type="l2",
+        loss_type="mse",
         early_stop=True,
         trial=None,
         guidance_weight=20,
         attention_layers=[80],
         noise_steps=None,
+        frequency_print=50,
     ):
         self.model = network(
             input_size=x.shape[1],
@@ -167,6 +169,11 @@ class Diffusion:
         dataloader = DataLoader(
             TensorDataset(x, y), batch_size=batch_size, shuffle=False
         )
+        if trial == None:
+            files = glob.glob(f"./weights/{type}/*.pth")
+            if len(files) != 0:
+                for f in files:
+                    os.remove(f)
 
         training_loss = []
         val_loss = []
@@ -191,7 +198,7 @@ class Diffusion:
                 batch_loss_training.append(loss.item())
             if y_val is not None:
                 self.model.eval()
-                if False or epoch % 100 == 0:
+                if False or epoch % frequency_print == 0:
                     error = test_performaces(
                         y_val,
                         self,
@@ -217,6 +224,10 @@ class Diffusion:
                 pbar.set_description(f"Performance Error: {np.mean(error):.4f}")
                 self.model.train()
             training_loss = np.mean(batch_loss_training)
-        if trial is None:
-            torch.save(self.model.state_dict(), f"./weights/{type}.pth")
+            if trial is None and (epoch) % frequency_print == 0:
+                torch.save(
+                    self.model.state_dict(),
+                    f"./weights/{type}/EPOCH{epoch}-PError: {np.mean(error):.4f}.pth",
+                )
+        torch.save(self.model.state_dict(), f"./weights/{type}/EPOCH{epochs}.pth")
         return training_loss, error if y_val is not None else training_loss

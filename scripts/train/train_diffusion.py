@@ -20,7 +20,7 @@ from Evaluations import (
     plot_dataset,
 )
 import seaborn as sns
-from Optimizations import HYPERPARAMETERS_DDPM, GUIDANCE_WEIGTH_OPT
+from Optimizations import HYPERPARAMETERS_DDPM, GUIDANCE_WEIGHT_OPT
 from DDPM import Diffusion
 
 
@@ -33,6 +33,7 @@ def main():
 
     ############################### VCOTA DATASET #############################
 
+    torch.cuda.empty_cache()
     dataframe = pd.read_csv("./data/vcota.csv")
     df_X = dataframe[
         [
@@ -153,11 +154,13 @@ def main():
         network,
         df_X,
         df_y,
+        type,
         X_val=X_val,
         y_val=y_val,
-        epochs=5000,
+        epochs=4000,
         early_stop=False,
         **hyper_parameters,
+        frequency_print=50,
     )
 
     DDPM.model = network(
@@ -166,9 +169,20 @@ def main():
         y_dim=y.shape[-1],
         hidden_layers=hyper_parameters["hidden_layers"],
         attention_layers=hyper_parameters["attention_layers"],
+    ).cuda()
+    path_DDPM = max(
+        glob.glob(f"./weights/{type}/*.pth"),
+        key=os.path.getctime,
     )
-    DDPM.model.load_state_dict(torch.load(f"./weights/{type}.pth"))
-    # hyper_parameters = GUIDANCE_WEIGTH_OPT(DDPM, y_val, df_X, df_y, type)
+    DDPM.model.load_state_dict(torch.load(path_DDPM))
+    hyper_parameters = GUIDANCE_WEIGHT_OPT(
+        DDPM,
+        y_val,
+        df_X,
+        df_y,
+        type,
+        n_trials=20,
+    )
 
     ##### EVALUATIONS #################################
 

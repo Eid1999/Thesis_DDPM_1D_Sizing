@@ -22,13 +22,23 @@ def HYPERPARAMETERS_DDPM(
     df_y,
     network,
     type,
+    noise_steps,
     epoch=100,
     n_trials=20,
     X_min=None,
     X_max=None,
+    guidance_weight=0.3,
+    frequency_print=200,
+    delete_previous_study=True,
 ):
     def objective(trial):
-        num_layers = trial.suggest_int("num_layers", 7, 30)
+        real_layers = trial.suggest_int("num_layers", 5, 30)
+
+        num_layers = (
+            real_layers
+            if type == "MLP"
+            else real_layers // 2 + math.ceil(real_layers / 2) - real_layers // 2
+        )
         params = {
             "hidden_layers": [
                 trial.suggest_int(f"hidden_size{i+1}", 800, 5000, log=True)
@@ -51,7 +61,7 @@ def HYPERPARAMETERS_DDPM(
             ),
             "loss_type": trial.suggest_categorical(
                 "loss_type",
-                ["l1", "l2"],
+                ["l1", "mse"],
             ),
             # "guidance_weight": trial.suggest_float(
             #     "guidance_weight",
@@ -60,11 +70,23 @@ def HYPERPARAMETERS_DDPM(
             #     log=True,
             # ),
         }
-        DDPM = Diffusion(vect_size=X_train.shape[1])
-
-        if X_max != None and X_min != None:
-            DDPM.X_norm_max = X_max
-            DDPM.X_norm_min = X_min
+        if "guidance_weight" not in params:
+            params["guidance_weight"] = guidance_weight
+        if type != "MLP":
+            for i in range(num_layers - math.ceil(real_layers / 2) - real_layers // 2):
+                j = num_layers + i
+                params["hidden_layers"][f"hidden_size{j+1}"] = params["hidden_layers"][
+                    f"hidden_size{i}"
+                ]
+                params["num_heads"][f"num_heads{j+1}"] = params["num_heads"][
+                    f"num_heads{i}"
+                ]
+        DDPM = Diffusion(
+            vect_size=X_train.shape[1],
+            noise_steps=noise_steps,
+            X_norm_max=X_max,
+            X_norm_min=X_min,
+        )
 
         loss, error = DDPM.reverse_process(
             X_train,
@@ -72,20 +94,29 @@ def HYPERPARAMETERS_DDPM(
             network,
             df_X,
             df_y,
+            type,
             epochs=epoch + 1,
             X_val=X_val,
             y_val=y_val,
             **params,
             trial=trial,
             early_stop=False,
+            frequency_print=frequency_print,
         )
         del DDPM
         return np.mean(error)
 
+    if delete_previous_study:
+        files = glob.glob(f"./optuna_studies/{type}/Noise_Steps{noise_steps}*")
+        if len(files) != 0:
+            for f in files:
+                os.remove(f)
     study = optuna.create_study(
         direction="minimize",
         sampler=optuna.samplers.TPESampler(seed=0),
-        # pruner=optuna.pruners.SuccessiveHalvingPruner(),
+        study_name=f"{type}study",
+        storage=f"sqlite:///optuna_studies/{type}/Noise_Steps{noise_steps}.db",
+        load_if_exists=True,
     )
     study.optimize(objective, n_trials=n_trials)  # type: ignore
     best_trial = study.best_trial

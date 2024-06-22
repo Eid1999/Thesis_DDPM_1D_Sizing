@@ -13,7 +13,7 @@ from optuna.visualization import (
 import seaborn as sns
 
 
-def GUIDANCE_WEIGTH_OPT(DDPM, y_val, df_X, df_y, type, n_trials=2):
+def GUIDANCE_WEIGHT_OPT(DDPM, y_val, df_X, df_y, type, n_trials=2):
     def objective(trial):
         params = {
             "weight": trial.suggest_float("weight", 2, 100, log=True),
@@ -47,19 +47,19 @@ def GUIDANCE_WEIGTH_OPT(DDPM, y_val, df_X, df_y, type, n_trials=2):
         values = trial.values[0] if trial.values != None else 0  # x-axis value
         y_values.append(values * 100)
     data = {
-        "Weigths": x_values,
+        "Weights": x_values,
         "Mean Performance Error": y_values,
     }
 
     data = pd.DataFrame(data)
     sns.lineplot(
         data=data,
-        x="Weigths",
+        x="Weights",
         y="Mean Performance Error",
         marker="o",
     )
 
-    plt.xlabel("Weigths", fontsize=14)
+    plt.xlabel("Weights", fontsize=14)
     plt.ylabel("Mean Performance Error[%]", fontsize=14)
     plt.title("Epochs=500,Noise Step=100, Scaler=0.05", fontsize=14)
     # plt.xscale("log")
