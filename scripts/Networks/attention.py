@@ -1,16 +1,33 @@
 from requirements import *
+from einops import rearrange, reduce, repeat
+from math import lcm
 
 
 class MultiheadAttention(nn.Module):
-    def __init__(self, input_dim, heads=8):
-        super(MultiheadAttention, self).__init__()
-        self.attention = nn.MultiheadAttention(input_dim, heads, batch_first=True)
+
+    def __init__(self, dim, heads=4, dim_head=32):
+        super().__init__()
+
+        hidden_dim = dim_head * heads
+        self.scale = dim_head**-0.5
+        self.heads = heads
+
+        self.to_qkv = nn.Conv1d(dim, hidden_dim * 3, 1, bias=False)
+        self.to_out = nn.Conv1d(hidden_dim, dim, 1)
 
     def forward(self, x):
-        x = x[None].permute(1, 0, 2)
-        output, _ = self.attention(x, x, x)
-        output = output.permute(1, 0, 2).squeeze()
-        return output
+        x = x[:, :, None]
+        qkv = self.to_qkv(x).chunk(3, dim=1)
+        q, k, v = map(lambda t: rearrange(t, "b (h c) n -> b h c n", h=self.heads), qkv)
+
+        q = q * self.scale
+
+        sim = torch.einsum("b h d i, b h d j -> b h i j", q, k)
+        attn = sim.softmax(dim=-1)
+        out = torch.einsum("b h i j, b h d j -> b h i d", attn, v)
+
+        out = rearrange(out, "b h n d -> b (h d) n")
+        return out.squeeze()
 
 
 class SelfAttention(nn.Module):
@@ -36,7 +53,6 @@ class SelfAttention(nn.Module):
             out_features=hidden_dim,
             bias=False,
         )
-
         # Softmax function to compute attention weights
         self.softmax = nn.Softmax(dim=-1)
 

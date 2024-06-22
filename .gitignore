@@ -28,3 +28,4 @@ scripts/utils/__pycache__/*.cpython-310.pyc
 scripts/train/__pycache__/*.cpython-310.pyc
 .vscode
 Code.code-workspace
+optuna_studies/*.db

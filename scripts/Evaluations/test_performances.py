@@ -15,7 +15,10 @@ def test_performaces(
     if display:
         print("\n\n\nPerformance Error")
     X_Sampled = DDPM.sampling(
-        DDPM.model.cuda(), y_test.shape[0], y_test, weight=best_weight
+        DDPM.model.cuda(),
+        y_test.shape[0],
+        y_test,
+        weight=best_weight,
     )
     with open("./templates/best_simulator.json", "r") as file:
         hyper_parameters = json.load(file)
