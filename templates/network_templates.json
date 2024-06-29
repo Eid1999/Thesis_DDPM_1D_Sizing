@@ -1,0 +1,98 @@
+{
+    "MLP": {
+        "nn_template": {
+            "hidden_layers": [
+                1000,
+                1000,
+                1000,
+                1000,
+                1000
+            ]
+        },
+        "batch_size": 100,
+        "learning_rate": 1e-05,
+        "loss_type": "mse",
+        "noise_steps": 1000,
+        "guidance_weight": 1
+    },
+    "MLP_skip": {
+        "nn_template": {
+            "hidden_layers": [
+                1000,
+                1000,
+                1000,
+                1000,
+                1000
+            ]
+        },
+        "batch_size": 188,
+        "learning_rate": 9.228295957427455e-05,
+        "loss_type": "mse",
+        "guidance_weight": 4.5416,
+        "noise_steps": 100
+    },
+    "EoT": {
+        "nn_template": {
+            "hidden_layers": [
+                1000,
+                1000,
+                1000,
+                1000,
+                1000,
+                1000,
+                1000,
+                1000,
+                1000
+            ],
+            "attention_layers": [
+                200,
+                200,
+                200,
+                200,
+                200,
+                200,
+                200,
+                200,
+                200,
+                200
+            ]
+        },
+        "batch_size": 100,
+        "learning_rate": 1e-05,
+        "loss_type": "mse",
+        "noise_steps": 1000,
+        "guidance_weight": 0.3
+    },
+    "Simulator": {
+        "nn_template": {
+            "hidden_layers": [
+                112,
+                147,
+                461
+            ]
+        },
+        "batch_size": 106,
+        "lr": 0.0009228295957427442
+    },
+    "Normalization": {
+        "type_normalization": "minmax",
+        "log_norm": [
+            "w8",
+            "w6",
+            "w4",
+            "w10",
+            "w1",
+            "w0",
+            "l8",
+            "l6",
+            "l4",
+            "l10",
+            "l1",
+            "l0",
+            "gdc",
+            "idd",
+            "gbw",
+            "pm"
+        ]
+    }
+}
