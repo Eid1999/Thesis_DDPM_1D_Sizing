@@ -1,13 +1,17 @@
-from requirements import *
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from libraries import *
 
 
 class SinusoidalPosEmb(nn.Module):
-    def __init__(self, dim, theta=10000):
+    def __init__(self, dim: int, theta: int = 10000) -> None:
         super().__init__()
         self.dim = dim
         self.theta = theta
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         device = x.device
         half_dim = self.dim // 2
         emb = math.log(self.theta) / (half_dim - 1)

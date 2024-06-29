@@ -1,16 +1,19 @@
-from requirements import *
+import sys
+import os
 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from libraries import *
 from Dataset import normalization, reverse_normalization
 from Networks import Simulator
 
 
 def test_performaces(
-    y_test,
+    y_test: torch.Tensor,
     DDPM,
-    best_weight,
-    df_X,
-    df_y,
-    display=False,
+    best_weight: int,
+    df_X: pd.DataFrame,
+    df_y: pd.DataFrame,
+    display: bool = False,
 ):
     if display:
         print("\n\n\nPerformance Error")
@@ -20,28 +23,40 @@ def test_performaces(
         y_test,
         weight=best_weight,
     )
-    with open("./templates/best_simulator.json", "r") as file:
-        hyper_parameters = json.load(file)
+    with open("./templates/network_templates.json", "r") as file:
+        hyper_parameters = json.load(file)["Simulator"]
     simulator = Simulator(
         df_X.shape[-1],
         df_y.shape[-1],
-        hidden_layers=hyper_parameters["hidden_layers"],
+        **hyper_parameters["nn_template"],
     ).to("cuda")
     simulator.load_state_dict(torch.load("./weights/Simulator.pth"))
 
     y_Sampled = simulator(X_Sampled)
+    df_y_Sampled = pd.DataFrame(
+        y_Sampled.detach().cpu().numpy(),
+        columns=df_y.columns,
+    )
+    df_y_Sampled = reverse_normalization(
+        df_y_Sampled,
+        df_y.copy(),
+    )
+    df_y_test = pd.DataFrame(
+        y_test.detach().cpu().numpy(),
+        columns=df_y.columns,
+    )
+    df_y_test = reverse_normalization(
+        df_y_test,
+        df_y.copy(),
+    )
 
-    y_Sampled = reverse_normalization(y_Sampled.detach().cpu().numpy(), df_y)
-    y_test = reverse_normalization(y_test.cpu().numpy(), df_y)
-    y_Sampled = pd.DataFrame(y_Sampled, columns=df_y.columns)
-    y_test = pd.DataFrame(y_test, columns=df_y.columns)
     error = np.mean(
         np.abs(
             np.divide(
-                (y_test - y_Sampled),
-                y_test,
-                out=np.zeros_like(y_test),
-                where=(y_test != 0),
+                (df_y_test - df_y_Sampled),
+                df_y_test,
+                out=np.zeros_like(df_y_test),
+                where=(df_y_test != 0),
             )
         ),
         axis=0,

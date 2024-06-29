@@ -1,14 +1,24 @@
-from requirements import *
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from libraries import *
 
 from Dataset import normalization, reverse_normalization
 
 
-def see_noise_data(DDPM, x, df_X):
+def see_noise_data(
+    DDPM,
+    x: torch.Tensor,
+    df_X: pd.DataFrame,
+) -> None:
     fig, axs = plt.subplots(1, 5)
     original_matrix = x.cpu().squeeze().numpy()
-
-    original_matrix = reverse_normalization(original_matrix, df_X)
-    original_matrix = pd.DataFrame(original_matrix, columns=df_X.columns)
+    original_matrix = pd.DataFrame(
+        original_matrix,
+        columns=df_X.columns,
+    )
+    original_matrix = reverse_normalization(original_matrix, df_X.copy())
     error = np.abs(
         np.divide(
             (original_matrix - original_matrix),
@@ -21,7 +31,6 @@ def see_noise_data(DDPM, x, df_X):
     axs[0].set_title(f"Noise:0%, Mean Error:0", fontsize=14)
     sns.heatmap(
         pd.DataFrame(
-            # normalization(original_matrix, original=df_X, type_normalization="minmax"),
             error,
             columns=df_X.columns,
         ),
@@ -49,11 +58,13 @@ def see_noise_data(DDPM, x, df_X):
             ),
         )
         matrix_with_noise_array = noise_vect.cpu().squeeze().numpy()
-        matrix_with_noise_array = reverse_normalization(matrix_with_noise_array, df_X)
-
         matrix_with_noise_array = pd.DataFrame(
             matrix_with_noise_array, columns=df_X.columns
         )
+        matrix_with_noise_array = reverse_normalization(
+            matrix_with_noise_array, df_X.copy()
+        )
+
         error = np.abs(
             np.divide(
                 (original_matrix - matrix_with_noise_array),

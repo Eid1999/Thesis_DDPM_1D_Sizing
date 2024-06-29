@@ -1,4 +1,8 @@
-from requirements import *
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from libraries import *
 from Networks import Simulator
 from Dataset import normalization, reverse_normalization
 
@@ -11,7 +15,7 @@ def inference_error(
     df_y,
     display=False,
     n_samples=100,
-):
+) -> None:
     if display:
         print("\n\n\nTarget Predictions")
     y_test = np.array(
@@ -26,27 +30,31 @@ def inference_error(
     y_test = pd.DataFrame(y_test, columns=df_y.columns)
     y_test.to_csv("y_test.csv")
 
-    y_test_norm = normalization(y_test, original=df_y)
+    y_test_norm = normalization(y_test, original=df_y).values
     y_test_norm = torch.tensor(y_test_norm, dtype=torch.float32, device=DDPM.device)
     X_Sampled = DDPM.sampling(
         DDPM.model.cuda(), y_test_norm.shape[0], y_test_norm, weight=best_weight
     )
-    with open("./templates/best_simulator.json", "r") as file:
-        hyper_parameters = json.load(file)
+    with open("./templates/network_templates.json", "r") as file:
+        hyper_parameters = json.load(file)["Simulator"]
     simulator = Simulator(
         df_X.shape[-1],
         df_y.shape[-1],
-        hidden_layers=hyper_parameters["hidden_layers"],
+        **hyper_parameters["nn_template"],
     ).to("cuda")
     simulator.load_state_dict(torch.load("./weights/Simulator.pth"))
 
     y_Sampled = simulator(X_Sampled)
-
-    y_Sampled = reverse_normalization(y_Sampled.detach().cpu().numpy(), df_y)
-    y_Sampled = pd.DataFrame(y_Sampled, columns=df_y.columns)
-
-    X_Sampled = reverse_normalization(X_Sampled.cpu().numpy(), df_X)
-    X_Sampled = pd.DataFrame(X_Sampled, columns=df_X.columns)
+    y_Sampled = pd.DataFrame(
+        y_Sampled.detach().cpu().numpy(),
+        columns=df_y.columns,
+    )
+    X_Sampled = pd.DataFrame(
+        X_Sampled.cpu().numpy(),
+        columns=df_X.columns,
+    )
+    y_Sampled = reverse_normalization(y_Sampled, df_y.copy())
+    X_Sampled = reverse_normalization(X_Sampled, df_X.copy())
     error_1 = np.mean(
         np.abs(
             np.divide(

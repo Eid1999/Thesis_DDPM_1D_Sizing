@@ -1,4 +1,4 @@
-from requirements import *
+from libraries import *
 
 
 def dataset_info(df):

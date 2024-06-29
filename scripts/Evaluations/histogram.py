@@ -1,37 +1,40 @@
-from requirements import *
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from libraries import *
 
 from Dataset import normalization, reverse_normalization
 
 
 def histogram(
     DDPM,
-    best_weight,
-    y,
-    df_X,
-    X_train,
-):
+    best_weight: float,
+    y: torch.Tensor,
+    df_X: pd.DataFrame,
+    X_train: torch.Tensor,
+) -> None:
     X_Sampled = DDPM.sampling(
         DDPM.model.cuda(),
         y.shape[0],
         y,
         weight=best_weight,
     )
-
-    df_Sampled_hist = reverse_normalization(
+    X_Sampled = pd.DataFrame(
         X_Sampled.cpu().numpy(),
-        df_X,
+        columns=df_X.columns,
+    )
+    df_X_train = pd.DataFrame(
+        X_train.cpu().numpy(),
+        columns=df_X.columns,
+    )
+    df_Sampled_hist = reverse_normalization(
+        X_Sampled,
+        df_X.copy(),
     )
     X_train_hist = reverse_normalization(
-        X_train.cpu(),
-        df_X,
-    )
-    df_Sampled_hist = pd.DataFrame(
-        df_Sampled_hist,
-        columns=df_X.columns,
-    )
-    X_train_hist = pd.DataFrame(
-        X_train_hist,
-        columns=df_X.columns,
+        df_X_train,
+        df_X.copy(),
     )
 
     fig, axs = plt.subplots(2, X_Sampled.shape[1])
@@ -39,7 +42,8 @@ def histogram(
         axs[0, i].set_title(f"Sample {df_Sampled_hist.columns[i]}")
         axs[0, i].hist(
             df_Sampled_hist.values[:, i],
-            bins=50,
+            bins=100,
+            log_scaled=True,
             range=[
                 df_Sampled_hist.values[:, i].min(),
                 df_Sampled_hist.values[:, i].max(),
@@ -50,6 +54,7 @@ def histogram(
         axs[1, i].hist(
             X_train_hist.values[:, i],
             bins=50,
+            log_scaled=True,
             range=[
                 df_Sampled_hist.values[:, i].min(),
                 df_Sampled_hist.values[:, i].max(),

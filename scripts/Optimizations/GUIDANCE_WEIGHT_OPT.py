@@ -1,5 +1,9 @@
-from requirements import *
-from DDPM import Diffusion
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from libraries import *
+from Diffusion import DiffusionDPM
 from Evaluations import test_performaces
 from optuna.visualization import (
     plot_intermediate_values,
@@ -10,13 +14,19 @@ from optuna.visualization import (
     plot_slice,
     plot_edf,
 )
-import seaborn as sns
 
 
-def GUIDANCE_WEIGHT_OPT(DDPM, y_val, df_X, df_y, type, n_trials=2):
+def GUIDANCE_WEIGHT_OPT(
+    DDPM: DiffusionDPM,
+    y_val: torch.Tensor,
+    df_X: pd.DataFrame,
+    df_y: pd.DataFrame,
+    nn_type: str,
+    n_trials: int = 2,
+) -> dict:
     def objective(trial):
         params = {
-            "weight": trial.suggest_float("weight", 2, 100, log=True),
+            "weight": trial.suggest_float("weight", 0.1, 5, log=True),
         }
         error = test_performaces(
             y_val,
@@ -34,14 +44,16 @@ def GUIDANCE_WEIGHT_OPT(DDPM, y_val, df_X, df_y, type, n_trials=2):
         direction="minimize"
     )  # We want to minimize the objective function
     study.optimize(objective, n_trials=n_trials)
-    with open(f"./templates/best_hyperparameters{type}.json", "r") as file:
-        hyper_parameters = json.load(file)
+    with open(f"./templates/network_templates.json", "r") as file:
+        data = json.load(file)
     best_trial = study.best_trial
-    hyper_parameters["guidance_weight"] = best_trial.params["weight"]
-    with open(f"./templates/best_hyperparameters{type}.json", "w") as file:
-        json.dump(hyper_parameters, file, indent=4)
+    data[nn_type]["guidance_weight"] = best_trial.params["weight"]
+
+    with open(f"./templates/network_templates.json", "w") as file:
+        json.dump(data, file, indent=4)
     x_values = []
     y_values = []
+    hyperparameter = data[nn_type]
     for trial in study.trials:
         x_values.append(trial.params["weight"])
         values = trial.values[0] if trial.values != None else 0  # x-axis value
@@ -65,4 +77,4 @@ def GUIDANCE_WEIGHT_OPT(DDPM, y_val, df_X, df_y, type, n_trials=2):
     # plt.xscale("log")
     plt.show()
 
-    return hyper_parameters
+    return hyperparameter

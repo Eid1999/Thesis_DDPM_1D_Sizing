@@ -1,21 +1,37 @@
-from requirements import *
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from libraries import *
 from Dataset import normalization, reverse_normalization
 
 
-def Test_error(X_test, y_test, model, original_y):
+def Test_error(
+    X_test: torch.Tensor,
+    y_test: torch.Tensor,
+    model: nn.Module,
+    df_y_original: pd.DataFrame,
+):
     model.eval()
     y = model(X_test)
-    y = reverse_normalization(y.detach().cpu().numpy(), original_y)
-    y_test = reverse_normalization(y_test.cpu().numpy(), original_y)
+    df_y = pd.DataFrame(
+        y.detach().cpu().numpy(),
+        columns=df_y_original.columns,
+    )
+    df_y_test = pd.DataFrame(
+        y_test.detach().cpu().numpy(), columns=df_y_original.columns
+    )
+    df_y = reverse_normalization(df_y, df_y_original.copy())
+    df_y_test = reverse_normalization(df_y_test, df_y_original.copy())
     error = np.mean(
         np.abs(
             np.divide(
-                (y - y_test),
-                y,  # type: ignore
-                out=np.zeros_like(y_test),
-                where=(y_test != 0),
+                (df_y - df_y_test),
+                df_y,  # type: ignore
+                out=np.zeros_like(df_y_test),
+                where=(df_y_test != 0),
             )  # type: ignore
         ),  # type: ignore
         axis=0,
     )  # type: ignore
-    print(f"\n{error}")
+    print(f"\n{error} \n Mean Error:{error.mean()}")

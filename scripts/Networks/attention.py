@@ -1,67 +1,85 @@
-from requirements import *
-from einops import rearrange, reduce, repeat
-from math import lcm
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from libraries import *
 
 
-class MultiheadAttention(nn.Module):
+class MultiHeadAttention(nn.Module):
+    def __init__(
+        self,
+        in_dim: int,
+        hidden_dim: int = 32,
+        num_heads: int = 8,
+    ) -> None:
+        super(MultiHeadAttention, self).__init__()
 
-    def __init__(self, dim, heads=4, dim_head=32):
-        super().__init__()
+        self.in_dim = in_dim
+        self.hidden_dim = hidden_dim
+        self.num_heads = num_heads
+        self.head_dim = hidden_dim // num_heads
 
-        hidden_dim = dim_head * heads
-        self.scale = dim_head**-0.5
-        self.heads = heads
+        assert (
+            self.head_dim * num_heads == hidden_dim
+        ), "hidden_dim must be divisible by num_heads"
 
-        self.to_qkv = nn.Conv1d(dim, hidden_dim * 3, 1, bias=False)
-        self.to_out = nn.Conv1d(hidden_dim, dim, 1)
+        # Linear transformation layers for query, key, and value
+        self.query = nn.Linear(in_dim, hidden_dim, bias=False)
+        self.key = nn.Linear(in_dim, hidden_dim, bias=False)
+        self.value = nn.Linear(in_dim, hidden_dim, bias=False)
+        self.out = nn.Linear(hidden_dim, in_dim, bias=False)
+        self.softmax = nn.Softmax(dim=-1)
 
-    def forward(self, x):
-        x = x[:, :, None]
-        qkv = self.to_qkv(x).chunk(3, dim=1)
-        q, k, v = map(lambda t: rearrange(t, "b (h c) n -> b h c n", h=self.heads), qkv)
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        batch_size, _ = x.size()
 
-        q = q * self.scale
+        query = self.query(x)
+        key = self.key(x)
+        value = self.value(x)
 
-        sim = torch.einsum("b h d i, b h d j -> b h i j", q, k)
-        attn = sim.softmax(dim=-1)
-        out = torch.einsum("b h i j, b h d j -> b h i d", attn, v)
+        query = query.view(batch_size, self.num_heads, self.head_dim)
+        key = key.view(batch_size, self.num_heads, self.head_dim)
+        value = value.view(batch_size, self.num_heads, self.head_dim)
 
-        out = rearrange(out, "b h n d -> b (h d) n")
-        return out.squeeze()
+        # Compute attention scores
+        attention_scores = torch.matmul(query, key.transpose(-2, -1)) / torch.sqrt(
+            torch.tensor(self.head_dim, dtype=torch.float32)
+        )
+
+        attention_weights = self.softmax(attention_scores)
+
+        attended_values = torch.matmul(attention_weights, value)
+
+        attended_values = attended_values.contiguous().view(batch_size, self.hidden_dim)
+        output = self.out(attended_values)
+
+        return output + x
 
 
 class SelfAttention(nn.Module):
-    def __init__(self, in_dim, hidden_dim):
+    def __init__(self, in_dim: int, hidden_dim: int):
         super(SelfAttention, self).__init__()
 
         self.in_dim = in_dim
         self.hidden_dim = hidden_dim
 
         # Linear transformation layers for query, key, and value
-        self.query = nn.Linear(
+        self.attention_matrices = nn.Linear(
             in_features=in_dim,
-            out_features=hidden_dim,
+            out_features=hidden_dim * 3,
             bias=False,
         )
-        self.key = nn.Linear(
-            in_features=in_dim,
-            out_features=hidden_dim,
+        self.out = nn.Linear(
+            in_features=hidden_dim,
+            out_features=in_dim,
             bias=False,
         )
-        self.value = nn.Linear(
-            in_features=in_dim,
-            out_features=hidden_dim,
-            bias=False,
-        )
-
         # Softmax function to compute attention weights
         self.softmax = nn.Softmax(dim=-1)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> None:
         # Transform input into query, key, and value
-        query = self.query(x)
-        key = self.key(x)
-        value = self.value(x)
+        query, key, value = self.attention_matrices(x).chunk(3, dim=-1)
 
         # Compute attention scores
         attention_scores = torch.matmul(query, key.transpose(-2, -1)) / torch.sqrt(
@@ -73,5 +91,4 @@ class SelfAttention(nn.Module):
 
         # Weighted sum using attention weights
         attended_value = torch.matmul(attention_weights, value)
-
-        return attended_value
+        return self.out(attended_value) + x

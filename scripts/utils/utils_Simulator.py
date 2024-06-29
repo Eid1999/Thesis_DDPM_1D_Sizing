@@ -1,16 +1,26 @@
-from requirements import *
+from libraries import *
 from Networks import Simulator
 
 
-def Eval_loop(X, y, model, loss_fn):
+def Eval_loop(
+    X: torch.Tensor,
+    y: torch.Tensor,
+    model: nn.Module,
+    loss_fn: Callable[[torch.Tensor, torch.Tensor], torch.Tensor],
+) -> float:
     model.eval()
     with torch.no_grad():
         y_pred = model(X)
         loss = loss_fn(y_pred, y)
-    return loss
+    return loss.cpu().numpy()
 
 
-def Train_loop(data_loader_train, model, optimizer, loss_fn):
+def Train_loop(
+    data_loader_train: DataLoader,
+    model: nn.Module,
+    optimizer: optim.Adam,
+    loss_fn: Callable[[torch.Tensor, torch.Tensor], torch.Tensor],
+) -> None:
     model.train()
     for X, y in data_loader_train:
         y_pred = model(X)
@@ -21,26 +31,26 @@ def Train_loop(data_loader_train, model, optimizer, loss_fn):
 
 
 def epoch_loop(
-    X_train,
-    y_train,
-    X_val,
-    y_val,
-    hidden_layers=[10],
-    batch_size=32,
-    lr=1e-5,
-    n_epoch=100,
-    trial=None,
-):
+    X_train: torch.Tensor,
+    y_train: torch.Tensor,
+    X_val: torch.Tensor,
+    y_val: torch.Tensor,
+    nn_template: dict = {"hidden_layers": [10]},
+    batch_size: int = 32,
+    lr: float = 1e-5,
+    n_epoch: int = 100,
+    trial: Optional[Trial] = None,
+) -> tuple[nn.Module, float]:
     last_val_loss = float("inf")
     model = Simulator(
         X_train.shape[-1],
         y_train.shape[-1],
-        hidden_layers=hidden_layers,
+        **nn_template,
     ).to("cuda")
     optimizer = optim.Adam(
         model.parameters(),
         lr=lr,
-        weight_decay=1e-5,
+        weight_decay=1e-4,
     )
     patience = 0
     dataloader = DataLoader(

@@ -1,24 +1,36 @@
-from requirements import *
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from libraries import *
 
 from Dataset import normalization, reverse_normalization
 
 
 def Test_error(
-    y_test,
+    y_test: torch.Tensor,
     DDPM,
-    best_weight,
-    X_test,
-    df_X,
-):
+    best_weight: int,
+    X_test: np.ndarray,
+    df_X: pd.DataFrame,
+) -> None:
     print("\n\n\nTest Error")
     X_Sampled = DDPM.sampling(
         DDPM.model.cuda(), y_test.shape[0], y_test, weight=best_weight
     )
-
-    df_Sampled = reverse_normalization(X_Sampled.cpu().numpy(), df_X)
-    df_X_test = reverse_normalization(X_test, df_X)
-    df_Sampled = pd.DataFrame(df_Sampled, columns=df_X.columns)
-    df_X_test = pd.DataFrame(df_X_test, columns=df_X.columns)
+    df_Sampled = pd.DataFrame(
+        X_Sampled.cpu().numpy(),
+        columns=df_X.columns,
+    )
+    df_X_test = pd.DataFrame(X_test, columns=df_X.columns)
+    df_Sampled = reverse_normalization(
+        df_Sampled,
+        df_X.copy(),
+    )
+    df_X_test = reverse_normalization(
+        df_X_test,
+        df_X.copy(),
+    )
     error = np.mean(
         np.abs(
             np.divide(
@@ -33,10 +45,7 @@ def Test_error(
     print(f"\n{error}")
     plt.subplot(1, 2, 1)
     sns.heatmap(
-        pd.DataFrame(
-            normalization(df_Sampled, original=df_X, type_normalization="minmax"),
-            columns=df_X.columns,
-        ),
+        normalization(df_Sampled, original=df_X.copy(), type_normalization="minmax"),
         cmap="Spectral",
         xticklabels=True,
     )
@@ -45,10 +54,7 @@ def Test_error(
 
     plt.subplot(1, 2, 2)
     sns.heatmap(
-        pd.DataFrame(
-            normalization(df_X_test, original=df_X, type_normalization="minmax"),
-            columns=df_X.columns,
-        ),
+        normalization(df_X_test, original=df_X.copy(), type_normalization="minmax"),
         cmap="Spectral",
         xticklabels=True,
     )

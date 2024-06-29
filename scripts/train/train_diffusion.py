@@ -3,7 +3,7 @@ import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from requirements import *
+from libraries import *
 from Dataset import (
     normalization,
     reverse_normalization,
@@ -21,15 +21,22 @@ from Evaluations import (
 )
 import seaborn as sns
 from Optimizations import HYPERPARAMETERS_DDPM, GUIDANCE_WEIGHT_OPT
-from DDPM import Diffusion
+from Diffusion import DiffusionDPM
 
 
 guidance = True
-from Networks import MLP, MLP_skip
+from Networks import MLP, MLP_skip, EoT
+
+nn_type = "EoT"  ## define NN type
 
 
 def main():
-    network = MLP if type == "MLP" else MLP_skip
+    nn_map = {
+        "MLP_skip": MLP_skip,
+        "MLP": MLP,
+        "EoT": EoT,
+    }
+    network = nn_map[nn_type]
 
     ############################### VCOTA DATASET #############################
 
@@ -62,8 +69,8 @@ def main():
 
     # plot_dataset(df_y)
 
-    X = normalization(df_X)
-    y = normalization(df_y)
+    X = normalization(df_X.copy()).values
+    y = normalization(df_y.copy()).values
 
     X_train, X_test, y_train, y_test = train_test_split(
         X,
@@ -77,47 +84,53 @@ def main():
     )
 
     norm_min = normalization(
-        np.array(
-            [
-                1e-6,
-                1e-6,
-                1e-6,
-                1e-6,
-                1e-6,
-                1e-6,
-                0.34e-6,
-                0.34e-6,
-                0.34e-6,
-                0.34e-6,
-                0.34e-6,
-                0.34e-6,
-            ]
-        )[None],
-        original=df_X.values,
-    )
+        pd.DataFrame(
+            np.array(
+                [
+                    1e-6,
+                    1e-6,
+                    1e-6,
+                    1e-6,
+                    1e-6,
+                    1e-6,
+                    0.34e-6,
+                    0.34e-6,
+                    0.34e-6,
+                    0.34e-6,
+                    0.34e-6,
+                    0.34e-6,
+                ]
+            )[None],
+            columns=df_X.columns,
+        ),
+        original=df_X,
+    ).values
     norm_max = normalization(
-        np.array(
-            [
-                100e-6,
-                100e-6,
-                100e-6,
-                100e-6,
-                100e-6,
-                100e-6,
-                0.94e-6,
-                0.94e-6,
-                0.94e-6,
-                0.94e-6,
-                0.94e-6,
-                0.94e-6,
-            ]
-        )[None],
-        original=df_X.values,
-    )
-    with open(f"./templates/best_hyperparameters{type}.json", "r") as file:
-        hyper_parameters = json.load(file)
-
-    DDPM = Diffusion(
+        pd.DataFrame(
+            np.array(
+                [
+                    100e-6,
+                    100e-6,
+                    100e-6,
+                    100e-6,
+                    100e-6,
+                    100e-6,
+                    0.94e-6,
+                    0.94e-6,
+                    0.94e-6,
+                    0.94e-6,
+                    0.94e-6,
+                    0.94e-6,
+                ]
+            )[None],
+            columns=df_X.columns,
+        ),
+        original=df_X,
+    ).values
+    with open(f"./templates/network_templates.json", "r") as file:
+        data = json.load(file)
+    hyper_parameters = data[nn_type]
+    DDPM = DiffusionDPM(
         vect_size=X.shape[1],
         X_norm_max=norm_max,
         X_norm_min=norm_min,
@@ -141,11 +154,14 @@ def main():
     #     df_X,
     #     df_y,
     #     network,
-    #     type,
+    #     nn_type,
+    #     hyper_parameters["noise_steps"],
     #     epoch=200,
-    #     n_trials=50,
-    #     X_min=DDPM.X_norm_min,
-    #     X_max=DDPM.X_norm_max,
+    #     n_trials=20,
+    #     X_min=norm_min,
+    #     X_max=norm_max,
+    #     frequency_print=20,
+    #     delete_previous_study=True,
     # )
 
     DDPM.reverse_process(
@@ -154,24 +170,23 @@ def main():
         network,
         df_X,
         df_y,
-        type,
+        nn_type,
         X_val=X_val,
         y_val=y_val,
         epochs=4000,
         early_stop=False,
         **hyper_parameters,
-        frequency_print=50,
+        frequency_print=20,
     )
 
     DDPM.model = network(
         input_size=X.shape[1],
         output_size=X.shape[1],
         y_dim=y.shape[-1],
-        hidden_layers=hyper_parameters["hidden_layers"],
-        attention_layers=hyper_parameters["attention_layers"],
+        **hyper_parameters["nn_template"],
     ).cuda()
     path_DDPM = max(
-        glob.glob(f"./weights/{type}/*.pth"),
+        glob.glob(f"./weights/{nn_type}/noise{DDPM.noise_steps}/*.pth"),
         key=os.path.getctime,
     )
     DDPM.model.load_state_dict(torch.load(path_DDPM))
@@ -180,7 +195,7 @@ def main():
         y_val,
         df_X,
         df_y,
-        type,
+        nn_type,
         n_trials=20,
     )
 
