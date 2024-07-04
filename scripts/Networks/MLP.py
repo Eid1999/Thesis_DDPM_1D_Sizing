@@ -4,7 +4,6 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from libraries import *
 from Networks.SinEmbPos import SinusoidalPosEmb
-from Networks.attention import SelfAttention, MultiHeadAttention
 from Networks.Modulations import FiLM, Addition, Multiplication
 
 
@@ -69,7 +68,7 @@ class MLP(nn.Module):
 
         self.modulation = nn.ModuleList(
             [
-                Multiplication(y_dim, input_size if i == 0 else hidden_layers[i - 1])
+                FiLM(y_dim, input_size if i == 0 else hidden_layers[i - 1])
                 for i in range(len(hidden_layers) + 1)
             ]
         )

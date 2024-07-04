@@ -27,7 +27,7 @@ from Diffusion import DiffusionDPM
 guidance = True
 from Networks import MLP, MLP_skip, EoT
 
-nn_type = "EoT"  ## define NN type
+nn_type = "MLP"  ## define NN type
 
 
 def main():
@@ -103,7 +103,7 @@ def main():
             )[None],
             columns=df_X.columns,
         ),
-        original=df_X,
+        df_original=df_X,
     ).values
     norm_max = normalization(
         pd.DataFrame(
@@ -125,7 +125,7 @@ def main():
             )[None],
             columns=df_X.columns,
         ),
-        original=df_X,
+        df_original=df_X,
     ).values
     with open(f"./templates/network_templates.json", "r") as file:
         data = json.load(file)
@@ -156,28 +156,29 @@ def main():
     #     network,
     #     nn_type,
     #     hyper_parameters["noise_steps"],
-    #     epoch=200,
+    #     epoch=1000,
     #     n_trials=20,
     #     X_min=norm_min,
     #     X_max=norm_max,
-    #     frequency_print=20,
+    #     frequency_print=200,
     #     delete_previous_study=True,
+    #     guidance_weight=hyper_parameters["guidance_weight"],
     # )
 
-    DDPM.reverse_process(
-        X,
-        y,
-        network,
-        df_X,
-        df_y,
-        nn_type,
-        X_val=X_val,
-        y_val=y_val,
-        epochs=4000,
-        early_stop=False,
-        **hyper_parameters,
-        frequency_print=20,
-    )
+    # DDPM.reverse_process(
+    #     X_train,
+    #     y_train,
+    #     network,
+    #     df_X,
+    #     df_y,
+    #     nn_type,
+    #     X_val=X_val,
+    #     y_val=y_val,
+    #     epochs=10000,
+    #     early_stop=False,
+    #     **hyper_parameters,
+    #     frequency_print=100,
+    # )
 
     DDPM.model = network(
         input_size=X.shape[1],
@@ -190,14 +191,14 @@ def main():
         key=os.path.getctime,
     )
     DDPM.model.load_state_dict(torch.load(path_DDPM))
-    hyper_parameters = GUIDANCE_WEIGHT_OPT(
-        DDPM,
-        y_val,
-        df_X,
-        df_y,
-        nn_type,
-        n_trials=20,
-    )
+    # hyper_parameters = GUIDANCE_WEIGHT_OPT(
+    #     DDPM,
+    #     y_val,
+    #     df_X,
+    #     df_y,
+    #     nn_type,
+    #     n_trials=20,
+    # )
 
     ##### EVALUATIONS #################################
 

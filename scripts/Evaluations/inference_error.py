@@ -30,7 +30,7 @@ def inference_error(
     y_test = pd.DataFrame(y_test, columns=df_y.columns)
     y_test.to_csv("y_test.csv")
 
-    y_test_norm = normalization(y_test, original=df_y).values
+    y_test_norm = normalization(y_test, df_original=df_y).values
     y_test_norm = torch.tensor(y_test_norm, dtype=torch.float32, device=DDPM.device)
     X_Sampled = DDPM.sampling(
         DDPM.model.cuda(), y_test_norm.shape[0], y_test_norm, weight=best_weight

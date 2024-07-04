@@ -38,32 +38,37 @@ def histogram(
     )
 
     fig, axs = plt.subplots(2, X_Sampled.shape[1])
-    for i in range(df_Sampled_hist.shape[1]):
+    for i, col in enumerate(df_Sampled_hist.columns):
         axs[0, i].set_title(f"Sample {df_Sampled_hist.columns[i]}")
-        axs[0, i].hist(
-            df_Sampled_hist.values[:, i],
+        sns.histplot(
+            df_Sampled_hist[col].to_frame(),
+            ax=axs[0, i],
+            log_scale=True,
             bins=100,
-            log_scaled=True,
-            range=[
-                df_Sampled_hist.values[:, i].min(),
-                df_Sampled_hist.values[:, i].max(),
-            ],
+            legend=False,
+            kde=True,  # If you want to add a KDE line
+            color="blue",  # Change to your desired color
+            edgecolor="black",  # Change edge color if desired
         )
         # axs[0, i].set_ylim(0, len(df_Sampled_hist))
-        axs[1, i].set_title(f"Input {df_Sampled_hist.columns[i]}")
-        axs[1, i].hist(
-            X_train_hist.values[:, i],
-            bins=50,
-            log_scaled=True,
-            range=[
-                df_Sampled_hist.values[:, i].min(),
-                df_Sampled_hist.values[:, i].max(),
-            ],
+        # pdb.set_trace()
+        sns.histplot(
+            X_train_hist[col].to_frame(),
+            ax=axs[1, i],
+            log_scale=True,
+            bins=100,
+            legend=False,
+            kde=True,  # If you want to add a KDE line
+            color="blue",  # Change to your desired color
+            edgecolor="black",  # Change edge color if desired
         )
-        y_max1 = axs[1, i].get_ylim()[1]
-        y_max2 = axs[0, i].get_ylim()[1]
-        y_max = max(y_max1, y_max2)
+        # pdb.set_trace()
+
+        y_max = max(axs[1, i].get_ylim()[1], axs[0, i].get_ylim()[1])
         axs[1, i].set_ylim(0, y_max)
         axs[0, i].set_ylim(0, y_max)
-        # axs[1, i].set_ylim(0, len(df_Sampled_hist))
+        x_max = max(axs[1, i].get_xlim()[1], axs[0, i].get_xlim()[1])
+        x_min = min(axs[1, i].get_xlim()[0], axs[0, i].get_xlim()[0])
+        axs[1, i].set_xlim(x_min, x_max)
+        axs[0, i].set_xlim(x_min, x_max)
     plt.show()

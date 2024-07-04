@@ -2,18 +2,21 @@
     "MLP": {
         "nn_template": {
             "hidden_layers": [
-                1000,
-                1000,
-                1000,
-                1000,
-                1000
+                658,
+                271,
+                1042,
+                497,
+                735,
+                304,
+                279,
+                615
             ]
         },
-        "batch_size": 100,
-        "learning_rate": 1e-05,
-        "loss_type": "mse",
-        "noise_steps": 1000,
-        "guidance_weight": 1
+        "batch_size": 152,
+        "learning_rate": 0.0005777338060732953,
+        "loss_type": "l1",
+        "noise_steps": 50,
+        "guidance_weight": 0.2751521882940341
     },
     "MLP_skip": {
         "nn_template": {
@@ -25,11 +28,11 @@
                 1000
             ]
         },
-        "batch_size": 188,
+        "batch_size": 100,
         "learning_rate": 9.228295957427455e-05,
         "loss_type": "mse",
-        "guidance_weight": 4.5416,
-        "noise_steps": 100
+        "guidance_weight": 1,
+        "noise_steps": 1000
     },
     "EoT": {
         "nn_template": {
@@ -44,35 +47,35 @@
                 1000,
                 1000
             ],
-            "attention_layers": [
-                200,
-                200,
-                200,
-                200,
-                200,
-                200,
-                200,
-                200,
-                200,
-                200
+            "num_heads": [
+                10,
+                10,
+                10,
+                10,
+                10,
+                10,
+                10,
+                10,
+                10,
+                10
             ]
         },
         "batch_size": 100,
         "learning_rate": 1e-05,
         "loss_type": "mse",
         "noise_steps": 1000,
-        "guidance_weight": 0.3
+        "guidance_weight": 1
     },
     "Simulator": {
         "nn_template": {
             "hidden_layers": [
-                112,
-                147,
-                461
+                665,
+                554,
+                190
             ]
         },
-        "batch_size": 106,
-        "lr": 0.0009228295957427442
+        "batch_size": 198,
+        "lr": 0.0015281434097305575
     },
     "Normalization": {
         "type_normalization": "minmax",
@@ -88,11 +91,7 @@
             "l4",
             "l10",
             "l1",
-            "l0",
-            "gdc",
-            "idd",
-            "gbw",
-            "pm"
+            "l0"
         ]
     }
 }

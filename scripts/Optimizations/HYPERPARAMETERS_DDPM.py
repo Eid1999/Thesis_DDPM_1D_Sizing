@@ -73,12 +73,10 @@ def HYPERPARAMETERS_DDPM(
             # ),
         }
         if nn_type == "EoT":
-            params["nn_template"]["attention_layers"] = (
-                [
-                    trial.suggest_int(f"attention_size{i+1}", 20, 500, log=True)
-                    for i in range(num_layers + 1)
-                ],
-            )
+            params["nn_template"]["num_heads"] = [
+                trial.suggest_int(f"num_heads{i+1}", 1, 30, log=True)
+                for i in range(num_layers + 1)
+            ]
         if "guidance_weight" not in params:
             params["guidance_weight"] = guidance_weight
         if nn_type == "MLP_skip":
@@ -145,7 +143,7 @@ def HYPERPARAMETERS_DDPM(
         }
     )
     if nn_type == "EoT":
-        data["nn_template"]["attention_layers"] = [
+        data[nn_type]["nn_template"]["num_heads"] = [
             best_trial.params[f"attention_size{i+1}"]
             for i in range(best_trial.params["num_layers"] + 1)
         ]
@@ -165,4 +163,4 @@ def HYPERPARAMETERS_DDPM(
         xaxis_title="Trials",
         yaxis_title="Mean Performace Error",
     ).write_html(f"./html_graphs/optimization_history{nn_type}.html")
-    return data
+    return data[nn_type]

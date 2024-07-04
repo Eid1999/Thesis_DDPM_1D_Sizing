@@ -43,14 +43,14 @@ def HYPERPARAMETERS_OPT(
             },
             "batch_size": trial.suggest_int(
                 "batch_size",
-                32,
+                70,
                 500,
                 log=True,
             ),
             "lr": trial.suggest_float(
                 "lr",
                 1e-6,
-                1e-3,
+                1e-2,
                 log=True,
             ),
         }

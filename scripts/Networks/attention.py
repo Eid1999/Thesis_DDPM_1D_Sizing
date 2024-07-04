@@ -9,25 +9,25 @@ class MultiHeadAttention(nn.Module):
     def __init__(
         self,
         in_dim: int,
-        hidden_dim: int = 32,
+        head_dim: int = 32,
         num_heads: int = 8,
     ) -> None:
         super(MultiHeadAttention, self).__init__()
 
         self.in_dim = in_dim
-        self.hidden_dim = hidden_dim
         self.num_heads = num_heads
-        self.head_dim = hidden_dim // num_heads
+        self.hidden_dim = head_dim * num_heads
+        self.head_dim = head_dim
 
         assert (
-            self.head_dim * num_heads == hidden_dim
+            self.head_dim * num_heads == self.hidden_dim
         ), "hidden_dim must be divisible by num_heads"
 
         # Linear transformation layers for query, key, and value
-        self.query = nn.Linear(in_dim, hidden_dim, bias=False)
-        self.key = nn.Linear(in_dim, hidden_dim, bias=False)
-        self.value = nn.Linear(in_dim, hidden_dim, bias=False)
-        self.out = nn.Linear(hidden_dim, in_dim, bias=False)
+        self.query = nn.Linear(in_dim, self.hidden_dim, bias=False)
+        self.key = nn.Linear(in_dim, self.hidden_dim, bias=False)
+        self.value = nn.Linear(in_dim, self.hidden_dim, bias=False)
+        self.out = nn.Linear(self.hidden_dim, in_dim, bias=False)
         self.softmax = nn.Softmax(dim=-1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

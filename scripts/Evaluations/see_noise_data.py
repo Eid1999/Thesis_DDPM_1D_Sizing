@@ -18,27 +18,24 @@ def see_noise_data(
         original_matrix,
         columns=df_X.columns,
     )
-    original_matrix = reverse_normalization(original_matrix, df_X.copy())
+    norm_original_matrix = reverse_normalization(original_matrix, df_X.copy())
     error = np.abs(
         np.divide(
-            (original_matrix - original_matrix),
-            original_matrix,
-            out=np.zeros_like(original_matrix),
+            (norm_original_matrix - norm_original_matrix),
+            norm_original_matrix,
+            out=np.zeros_like(norm_original_matrix),
             where=(original_matrix != 0),
         )
     )
-    plt.suptitle("Error added by Noise Step", fontsize=14)
-    axs[0].set_title(f"Noise:0%, Mean Error:0", fontsize=14)
-    sns.heatmap(
+    plt.suptitle("Forward Process", fontsize=16)
+    axs[0].set_title(f"Noise:0%, Sizing Error:0", fontsize=14)
+    sns.histplot(
         pd.DataFrame(
-            error,
+            original_matrix,
             columns=df_X.columns,
         ),
-        cbar=False,
-        vmin=0,
-        vmax=0.2,
+        legend=False,
         # cmap="crest",
-        xticklabels=True,
         ax=axs[0],
     )
     for i in range(1, len(axs)):
@@ -61,36 +58,36 @@ def see_noise_data(
         matrix_with_noise_array = pd.DataFrame(
             matrix_with_noise_array, columns=df_X.columns
         )
-        matrix_with_noise_array = reverse_normalization(
+        norm_matrix_with_noise_array = reverse_normalization(
             matrix_with_noise_array, df_X.copy()
         )
 
         error = np.abs(
             np.divide(
-                (original_matrix - matrix_with_noise_array),
-                original_matrix,
+                (norm_original_matrix - norm_matrix_with_noise_array),
+                norm_matrix_with_noise_array,
                 out=np.zeros_like(matrix_with_noise_array),
                 where=(matrix_with_noise_array != 0),
             )
         )
         axs[i].set_title(
-            f"Noise:{int(noise_step*100/(DDPM.noise_steps - 1))}%, Mean Error:{error.mean().mean():.3f}",
+            f"Noise:{int(noise_step*100/(DDPM.noise_steps - 1))}%, Sizing Error:{error.mean().mean():.3f}",
             fontsize=14,
         )
-        sns.heatmap(
+        sns.histplot(
             pd.DataFrame(
-                error,
+                matrix_with_noise_array,
                 columns=df_X.columns,
             ),
-            vmin=0,
-            vmax=0.2,
+            legend=True if i == len(axs) - 1 else False,
             ax=axs[i],
-            # cmap="crest",
-            cbar=False if i != len(axs) - 1 else True,
-            xticklabels=True,
         )
-    cbar = axs[-1].collections[0].colorbar
-    cbar.set_ticks([0, 0.05, 0.1, 0.15, 0.2])
-    cbar.set_ticklabels(["0%", "5%", "10%", "15%", "20%"])
+    sns.move_legend(
+        axs[len(axs) - 1],
+        loc="center left",
+        bbox_to_anchor=[1, 0.5],
+        fancybox=True,
+        shadow=True,
+    )
 
     plt.show()

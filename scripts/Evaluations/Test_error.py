@@ -45,18 +45,22 @@ def Test_error(
     print(f"\n{error}")
     plt.subplot(1, 2, 1)
     sns.heatmap(
-        normalization(df_Sampled, original=df_X.copy(), type_normalization="minmax"),
+        normalization(df_Sampled, df_original=df_X.copy(), type_normalization="minmax"),
         cmap="Spectral",
         xticklabels=True,
+        vmin=1,
+        vmax=-1,
     )
     # plt.colorbar()
     plt.title("VCOTA Sample Dataset")
 
     plt.subplot(1, 2, 2)
     sns.heatmap(
-        normalization(df_X_test, original=df_X.copy(), type_normalization="minmax"),
+        normalization(df_X_test, df_original=df_X.copy(), type_normalization="minmax"),
         cmap="Spectral",
         xticklabels=True,
+        vmin=1,
+        vmax=-1,
     )
     plt.title("VCOTA test Dataset")
     plt.show()

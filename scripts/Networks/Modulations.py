@@ -16,13 +16,13 @@ class Addition(nn.Module):
         self.linear = nn.Sequential(
             nn.Linear(
                 feature_size,
+                out_features=feature_size * 4,
+            ),
+            nn.GELU(),
+            nn.Linear(
+                feature_size * 4,
                 out_features=input,
             ),
-            # nn.GELU(),
-            # nn.Linear(
-            #     feature_size * 4,
-            #     out_features=input,
-            # ),
         )
 
     def forward(

@@ -26,7 +26,7 @@ def GUIDANCE_WEIGHT_OPT(
 ) -> dict:
     def objective(trial):
         params = {
-            "weight": trial.suggest_float("weight", 0.1, 5, log=True),
+            "weight": trial.suggest_float("weight", 0.1, 20, log=True),
         }
         error = test_performaces(
             y_val,

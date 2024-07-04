@@ -43,7 +43,7 @@ class DiffusionDPM:
         # linear schedule
         def linear_schedule(
             beta_start: float = 0.0001,
-            beta_end: float = 0.01,
+            beta_end: float = 0.02,
         ) -> torch.Tensor:
 
             return torch.linspace(beta_start, beta_end, self.noise_steps)
@@ -58,7 +58,8 @@ class DiffusionDPM:
             )
             alphas_cumprod = alphas_cumprod / alphas_cumprod[0]
             betas = 1 - (alphas_cumprod[1:] / alphas_cumprod[:-1])
-            return torch.clip(betas, 0.0001, 0.99999)
+            # return betas * scaler
+            return torch.clip(betas, 0.001, 0.999)
 
         def logarithmic_schedule(
             beta_start: float = 0.0001, beta_end: float = 0.02
@@ -82,12 +83,12 @@ class DiffusionDPM:
         # p(xt|x0) := N (xt; √αtx0, (1 − αtI))
         sqrt_alpha_hat = torch.sqrt(self.alpha_hat[t])[:, None]
         sqrt_one_minus_alpha_hat = torch.sqrt(1 - self.alpha[t])[:, None]
-        epsilon = torch.rand_like(x)
+        epsilon = torch.randn_like(x)
         noisy_x = sqrt_alpha_hat * x + epsilon * sqrt_one_minus_alpha_hat
         return noisy_x, epsilon
 
     def sample_time(self, n: int) -> torch.Tensor:
-        return torch.randint(1, self.noise_steps, size=(n,), device=self.device)
+        return torch.randint(0, self.noise_steps, size=(n,), device=self.device)
 
     def sampling(
         self,
@@ -102,7 +103,7 @@ class DiffusionDPM:
             x = torch.randn(
                 n, self.vect_size, 1, device=self.device, dtype=torch.float
             ).squeeze()
-            for i in reversed(range(1, self.noise_steps)):
+            for i in reversed(range(0, self.noise_steps)):
                 t = (torch.ones(n) * i).long().to(self.device)
                 alpha = self.alpha[t][:, None]
                 sqrt_one_minus_alpha_hat = torch.sqrt(1 - self.alpha_hat[t])[:, None]
@@ -160,7 +161,7 @@ class DiffusionDPM:
         loss_type: str = "mse",
         early_stop: bool = True,
         trial: Optional[Trial] = None,
-        guidance_weight: int = 20,
+        guidance_weight: float = 0.3,
         frequency_print: int = 50,
         visualise_grad: bool = False,
         noise_steps: int = 1000,
@@ -174,7 +175,6 @@ class DiffusionDPM:
         optimizer = optim.Adam(
             self.model.parameters(),
             lr=learning_rate,
-            weight_decay=1e-5,
         )
         Loss_Function = self.select_loss(loss_type)
         # Loss_Function= self.MAPE
@@ -199,7 +199,6 @@ class DiffusionDPM:
         counter = 0
         self.model.eval()
         pbar = tqdm(range(epochs))
-        scheduler = lr_scheduler.ExponentialLR(optimizer, gamma=0.99)
         os.makedirs(f"./weights/{type}/noise{self.noise_steps}", exist_ok=True)
         for epoch in pbar:
             batch_loss_training = []
@@ -217,7 +216,6 @@ class DiffusionDPM:
                 if visualise_grad and epoch % frequency_print == 0:
                     plot_grad_flow(self.model.named_parameters())
                 optimizer.step()
-                scheduler.step()
                 batch_loss_training.append(loss.item())
             if y_val is not None:
                 self.model.eval()
@@ -245,7 +243,7 @@ class DiffusionDPM:
                         # if trial.should_prune():
                         # raise optuna.exceptions.TrialPruned()
                 pbar.set_description(
-                    f"Performance Error: {np.mean(error):.4f}, Train Loss:{np.array(batch_loss_training[-1]).max():.4f}"
+                    f"Performance Error: {np.mean(error):.4f}, Train Loss:{np.array(batch_loss_training[-1]):.4f}"
                 )
                 self.model.train()
             training_loss.append(np.mean(batch_loss_training))
@@ -258,5 +256,6 @@ class DiffusionDPM:
             self.model.state_dict(),
             f"./weights/{type}/noise{self.noise_steps}/EPOCH{epochs}.pth",
         )
+        del self.model
         if y_val is not None:
             return error.mean()

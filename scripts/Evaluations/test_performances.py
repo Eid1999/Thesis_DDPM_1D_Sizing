@@ -10,7 +10,7 @@ from Networks import Simulator
 def test_performaces(
     y_test: torch.Tensor,
     DDPM,
-    best_weight: int,
+    best_weight: float,
     df_X: pd.DataFrame,
     df_y: pd.DataFrame,
     display: bool = False,
@@ -49,7 +49,6 @@ def test_performaces(
         df_y_test,
         df_y.copy(),
     )
-
     error = np.mean(
         np.abs(
             np.divide(
