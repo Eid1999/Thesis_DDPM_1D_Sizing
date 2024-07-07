@@ -118,12 +118,13 @@ class DiffusionDPM:
                     else torch.zeros_like(x)
                 )
                 uncoditional_predicted_noise = model(x, t)
-                predicted_noise = 0
-                if weight > 0:
-                    predicted_noise = model(x, t, y=y)
-                    predicted_noise = (1 + weight) * predicted_noise
-                    # predicted_noise=torch.lerp(uncoditional_predicted_noise,predicted_noise,weight)
-                predicted_noise -= weight * uncoditional_predicted_noise
+
+                predicted_noise = model(x, t, y=y)
+                predicted_noise = (
+                    1 + weight
+                ) * predicted_noise - weight * uncoditional_predicted_noise
+                # predicted_noise=torch.lerp(uncoditional_predicted_noise,predicted_noise,weight)
+
                 x = (
                     1
                     / torch.sqrt(alpha)
