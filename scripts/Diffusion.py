@@ -3,9 +3,6 @@ from Evaluations import test_performaces
 from Evaluations.plot_gradient import plot_grad_flow
 
 
-torch.manual_seed(0)
-
-
 class DiffusionDPM:
 
     def __init__(
@@ -16,6 +13,11 @@ class DiffusionDPM:
         X_norm_max: np.ndarray = np.array([1] * 12),
         X_norm_min: np.ndarray = np.array([1] * 12),
     ) -> None:
+        seed_value = 0
+        torch.manual_seed(seed_value)
+        torch.cuda.manual_seed(seed_value)
+        np.random.seed(seed_value)
+        torch.manual_seed(seed_value)
         self.noise_steps = noise_steps
         self.vect_size = vect_size
         self.device = device

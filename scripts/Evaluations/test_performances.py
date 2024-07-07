@@ -61,5 +61,5 @@ def test_performaces(
         axis=0,
     )
     if display:
-        print(f"\n{error}")
+        print(f"\n{error} \n Mean: {error.mean()}")
     return error

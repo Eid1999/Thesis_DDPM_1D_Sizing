@@ -6,6 +6,7 @@ from libraries import *
 from Networks.SinEmbPos import SinusoidalPosEmb
 from Networks.attention import SelfAttention, MultiHeadAttention
 from Networks import MLP
+from Networks.Modulations import FiLM, Addition, Multiplication
 
 
 class EoT(MLP):
@@ -21,43 +22,49 @@ class EoT(MLP):
         num_heads: list = [8, 8],
         attention_layers: list = [10, 10],
     ):
-        super(EoT, self).__init__(
-            input_size, hidden_layers, output_size, dim, y_dim, seed_value
+        super().__init__(
+            input_size=input_size,
+            hidden_layers=hidden_layers,
+            output_size=output_size,
+            dim=dim,
+            y_dim=y_dim,
+            seed_value=seed_value,
         )
         self.attention_layers = nn.ModuleList(
             [
                 nn.Sequential(
                     MultiHeadAttention(
-                        input_size,
+                        input_size if i == 0 else hidden_layers[i - 1],
                         num_heads=num_heads[i],
                     ),
+                    nn.LayerNorm(input_size if i == 0 else hidden_layers[i - 1]),
                 )
                 for i in range(len(hidden_layers) + 1)
             ]
-        )
-        self.first_ln = nn.ModuleList(
-            [nn.LayerNorm(input_size) for _ in range(len(hidden_layers) + 1)]
         )
         self.hidden_layers = nn.ModuleList(
             [
                 nn.Sequential(
                     nn.Linear(
-                        in_features=input_size,
-                        out_features=(hidden_layers[i]),
-                    ),
-                    nn.PReLU(),
-                    nn.Linear(
-                        in_features=hidden_layers[i],
+                        in_features=input_size if i == 0 else hidden_layers[i - 1],
                         out_features=(
-                            input_size if i < len(hidden_layers) else output_size
+                            hidden_layers[i] if i < len(hidden_layers) else output_size
                         ),
                     ),
+                    nn.PReLU() if i < len(hidden_layers) else nn.Identity(),
                 )
                 for i in range(len(hidden_layers) + 1)
             ]
         )
         self.output_ln = nn.ModuleList(
-            [nn.LayerNorm(input_size) for i in range(len(hidden_layers))]
+            [
+                (
+                    nn.LayerNorm(hidden_layers[i])
+                    if i < len(hidden_layers)
+                    else nn.Identity()
+                )
+                for i in range(len(hidden_layers) + 1)
+            ]
         )
 
     def forward(
@@ -69,7 +76,6 @@ class EoT(MLP):
         t = t.unsqueeze(dim=-1).type(torch.float).squeeze()
         for i, (
             time_embedding,
-            first_ln,
             output_ln,
             hidden_layer,
             modulation,
@@ -77,7 +83,6 @@ class EoT(MLP):
         ) in enumerate(
             zip(
                 self.time_embedding,
-                self.first_ln,
                 self.output_ln,
                 self.hidden_layers,
                 self.modulation,
@@ -88,9 +93,7 @@ class EoT(MLP):
             if y is not None:
                 t_emb = modulation(y, t_emb)
             x = attention_layers(x + t_emb)
-            x_ln = first_ln(x)
-            x = hidden_layer(x_ln)
-            if i < len(self.hidden_layers):
-                x = output_ln(x + x_ln)
+            x = hidden_layer(x)
+            x = output_ln(x)
 
         return x

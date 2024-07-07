@@ -44,8 +44,6 @@ class MLP(nn.Module):
                 for i in range(len(hidden_layers) + 1)
             ]
         )
-        # sinu_pos_emb = SinusoidalPosEmb(dim)
-        # sinu_y_embedding=SinusoidalPosEmb(y_dim)
         self.time_embedding = nn.ModuleList(
             [
                 nn.Sequential(

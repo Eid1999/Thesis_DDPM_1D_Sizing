@@ -5,7 +5,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from libraries import *
 from libraries import *
 from Networks.SinEmbPos import SinusoidalPosEmb
-from Networks.attention import SelfAttention, MultiHeadAttention
+from Networks.Modulations import FiLM, Addition, Multiplication
 from Networks.MLP import MLP
 
 
@@ -41,17 +41,17 @@ class MLP_skip(MLP):
         for i, (
             time_embedding,
             hidden_layer,
-            film_attention,
+            modulation,
         ) in enumerate(
             zip(
                 self.time_embedding,
                 self.hidden_layers,
-                self.FiLM,
+                self.modulation,
             )
         ):
             t_emb = time_embedding(t)
             if y is not None:
-                t_emb = film_attention(y, t_emb)
+                t_emb = modulation(y, t_emb)
             x = (
                 hidden_layer(x + t_emb)
                 if i - 1 < len(self.hidden_layers) // 2

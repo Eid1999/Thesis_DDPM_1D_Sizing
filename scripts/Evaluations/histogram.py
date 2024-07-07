@@ -37,38 +37,28 @@ def histogram(
         df_X.copy(),
     )
 
-    fig, axs = plt.subplots(2, X_Sampled.shape[1])
+    fig, axs = plt.subplots(1, X_Sampled.shape[1])
     for i, col in enumerate(df_Sampled_hist.columns):
-        axs[0, i].set_title(f"Sample {df_Sampled_hist.columns[i]}")
+        axs[i].set_title(f"Sample {df_Sampled_hist.columns[i]}")
+        plot_data = pd.DataFrame(
+            {"Sampled Data": df_Sampled_hist[col], "Real data": X_train_hist[col]}
+        )
         sns.histplot(
-            df_Sampled_hist[col].to_frame(),
-            ax=axs[0, i],
+            plot_data,
+            ax=axs[i],
             log_scale=True,
             bins=100,
-            legend=False,
             kde=True,  # If you want to add a KDE line
-            color="blue",  # Change to your desired color
-            edgecolor="black",  # Change edge color if desired
+            legend=True if i == len(axs) - 1 else False,
         )
         # axs[0, i].set_ylim(0, len(df_Sampled_hist))
         # pdb.set_trace()
-        sns.histplot(
-            X_train_hist[col].to_frame(),
-            ax=axs[1, i],
-            log_scale=True,
-            bins=100,
-            legend=False,
-            kde=True,  # If you want to add a KDE line
-            color="blue",  # Change to your desired color
-            edgecolor="black",  # Change edge color if desired
-        )
-        # pdb.set_trace()
+    sns.move_legend(
+        axs[len(axs) - 1],
+        loc="center left",
+        bbox_to_anchor=[1, 0.5],
+        fancybox=True,
+        shadow=True,
+    )
 
-        y_max = max(axs[1, i].get_ylim()[1], axs[0, i].get_ylim()[1])
-        axs[1, i].set_ylim(0, y_max)
-        axs[0, i].set_ylim(0, y_max)
-        x_max = max(axs[1, i].get_xlim()[1], axs[0, i].get_xlim()[1])
-        x_min = min(axs[1, i].get_xlim()[0], axs[0, i].get_xlim()[0])
-        axs[1, i].set_xlim(x_min, x_max)
-        axs[0, i].set_xlim(x_min, x_max)
     plt.show()

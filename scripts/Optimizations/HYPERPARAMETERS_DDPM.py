@@ -38,9 +38,7 @@ def HYPERPARAMETERS_DDPM(
         real_layers = trial.suggest_int("num_layers", 3, 50)
 
         num_layers = (
-            real_layers
-            if nn_type == "MLP"
-            else real_layers // 2 + math.ceil(real_layers / 2) - real_layers // 2
+            real_layers if nn_type == "MLP" or "EoT" else math.ceil(real_layers / 2)
         )
 
         params = {
@@ -80,11 +78,10 @@ def HYPERPARAMETERS_DDPM(
         if "guidance_weight" not in params:
             params["guidance_weight"] = guidance_weight
         if nn_type == "MLP_skip":
-            for i in range(num_layers - math.ceil(real_layers / 2) - real_layers // 2):
-                j = num_layers + i
-                params["nn_template"]["hidden_layers"][f"hidden_size{j+1}"] = params[
-                    "hidden_layers"
-                ][f"hidden_size{i}"]
+            for i in reversed(range(real_layers // 2)):
+                params["nn_template"]["hidden_layers"].append(
+                    params["nn_template"]["hidden_layers"][i]
+                )
         DDPM = DiffusionDPM(
             vect_size=X_train.shape[1],
             noise_steps=noise_steps,
@@ -128,12 +125,16 @@ def HYPERPARAMETERS_DDPM(
     best_trial = study.best_trial
     with open(f"./templates/network_templates.json", "r") as file:
         data = json.load(file)
+    real_layers = best_trial.params["num_layers"]
+
+    num_layers = (
+        real_layers if nn_type == "MLP" or "EoT" else math.ceil(real_layers / 2)
+    )
     data[nn_type].update(
         {
             "nn_template": {
                 "hidden_layers": [
-                    best_trial.params[f"hidden_size{i+1}"]
-                    for i in range(best_trial.params["num_layers"])
+                    best_trial.params[f"hidden_size{i+1}"] for i in range(num_layers)
                 ],
             },
             "batch_size": best_trial.params["batch_size"],
@@ -142,10 +143,15 @@ def HYPERPARAMETERS_DDPM(
             # "guidance_weight": best_trial.params["guidance_weight"],
         }
     )
+    if nn_type == "MLP_skip":
+        for i in reversed(range(real_layers // 2)):
+            data[nn_type]["nn_template"]["hidden_layers"].append(
+                best_trial.params[f"hidden_size{i+1}"]
+            )
+
     if nn_type == "EoT":
         data[nn_type]["nn_template"]["num_heads"] = [
-            best_trial.params[f"attention_size{i+1}"]
-            for i in range(best_trial.params["num_layers"] + 1)
+            best_trial.params[f"num_heads{i+1}"] for i in range(num_layers + 1)
         ]
     with open(f"./templates/network_templates.json", "w") as file:
         json.dump(data, file, indent=4)

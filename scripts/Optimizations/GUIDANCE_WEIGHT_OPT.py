@@ -74,7 +74,7 @@ def GUIDANCE_WEIGHT_OPT(
     plt.xlabel("Weights", fontsize=14)
     plt.ylabel("Mean Performance Error[%]", fontsize=14)
     plt.title("Epochs=500,Noise Step=100, Scaler=0.05", fontsize=14)
-    # plt.xscale("log")
+    plt.xscale("log")
     plt.show()
 
     return hyperparameter

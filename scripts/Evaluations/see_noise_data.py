@@ -82,6 +82,7 @@ def see_noise_data(
             legend=True if i == len(axs) - 1 else False,
             ax=axs[i],
         )
+        # axs[i].set_ylim(top=16000)
     sns.move_legend(
         axs[len(axs) - 1],
         loc="center left",
