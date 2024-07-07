@@ -27,7 +27,7 @@ from Diffusion import DiffusionDPM
 guidance = True
 from Networks import MLP, MLP_skip, EoT
 
-nn_type = "EoT"  ## define NN type
+nn_type = "MLP"  ## define NN type
 
 
 def main():
@@ -146,39 +146,39 @@ def main():
     y_val = torch.tensor(y_val, dtype=torch.float32, device=DDPM.device)
     y_test = torch.tensor(y_test, dtype=torch.float32, device=DDPM.device)
     see_noise_data(DDPM, X_train, df_X)
-    hyper_parameters = HYPERPARAMETERS_DDPM(
-        X_train,
-        y_train,
-        X_val,
-        y_val,
-        df_X,
-        df_y,
-        network,
-        nn_type,
-        hyper_parameters["noise_steps"],
-        epoch=1000,
-        n_trials=0,
-        X_min=norm_min,
-        X_max=norm_max,
-        frequency_print=200,
-        delete_previous_study=False,
-        guidance_weight=hyper_parameters["guidance_weight"],
-    )
+    # hyper_parameters = HYPERPARAMETERS_DDPM(
+    #     X_train,
+    #     y_train,
+    #     X_val,
+    #     y_val,
+    #     df_X,
+    #     df_y,
+    #     network,
+    #     nn_type,
+    #     hyper_parameters["noise_steps"],
+    #     epoch=1000,
+    #     n_trials=0,
+    #     X_min=norm_min,
+    #     X_max=norm_max,
+    #     frequency_print=200,
+    #     delete_previous_study=False,
+    #     guidance_weight=hyper_parameters["guidance_weight"],
+    # )
 
-    DDPM.reverse_process(
-        X_train,
-        y_train,
-        network,
-        df_X,
-        df_y,
-        nn_type,
-        X_val=X_val,
-        y_val=y_val,
-        epochs=10000,
-        early_stop=False,
-        **hyper_parameters,
-        frequency_print=100,
-    )
+    # DDPM.reverse_process(
+    #     X_train,
+    #     y_train,
+    #     network,
+    #     df_X,
+    #     df_y,
+    #     nn_type,
+    #     X_val=X_val,
+    #     y_val=y_val,
+    #     epochs=10000,
+    #     early_stop=False,
+    #     **hyper_parameters,
+    #     frequency_print=100,
+    # )
 
     DDPM.model = network(
         input_size=X.shape[1],
@@ -197,7 +197,7 @@ def main():
         df_X,
         df_y,
         nn_type,
-        n_trials=20,
+        n_trials=50,
     )
 
     ##### EVALUATIONS #################################

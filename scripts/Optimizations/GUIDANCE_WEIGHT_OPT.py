@@ -14,6 +14,7 @@ from optuna.visualization import (
     plot_slice,
     plot_edf,
 )
+import matplotlib.ticker as mtick
 
 
 def GUIDANCE_WEIGHT_OPT(
@@ -26,7 +27,7 @@ def GUIDANCE_WEIGHT_OPT(
 ) -> dict:
     def objective(trial):
         params = {
-            "weight": trial.suggest_float("weight", 0.1, 20, log=True),
+            "weight": trial.suggest_float("weight", 0, 5),
         }
         error = test_performaces(
             y_val,
@@ -57,24 +58,27 @@ def GUIDANCE_WEIGHT_OPT(
     for trial in study.trials:
         x_values.append(trial.params["weight"])
         values = trial.values[0] if trial.values != None else 0  # x-axis value
-        y_values.append(values * 100)
+        y_values.append(values)
     data = {
         "Weights": x_values,
         "Mean Performance Error": y_values,
     }
-
+    fig, ax = plt.subplots()
     data = pd.DataFrame(data)
+    data.to_csv(f"./scripts/graph_code/weights_data_{nn_type}.csv", index=False)
     sns.lineplot(
         data=data,
         x="Weights",
         y="Mean Performance Error",
         marker="o",
+        ax=ax,
     )
 
     plt.xlabel("Weights", fontsize=14)
     plt.ylabel("Mean Performance Error[%]", fontsize=14)
     plt.title("Epochs=500,Noise Step=100, Scaler=0.05", fontsize=14)
-    plt.xscale("log")
+    ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1.0))
+    # plt.xscale("log")
     plt.show()
 
     return hyperparameter

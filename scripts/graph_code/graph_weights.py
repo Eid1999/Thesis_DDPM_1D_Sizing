@@ -5,36 +5,28 @@ from matplotlib.ticker import ScalarFormatter
 import matplotlib.ticker as mtick
 from matplotlib.ticker import LogLocator
 
-data = {}
-Noise_Steps = [1, 5, 10, 50, 100, 1000, 2000]
-MLP_values = [1.5, 0.018, 0.0165, 0.022, 0.039, 0.567, 0.807]
-MLP_skip_values = [1.2, 0.0225, 0.019, 0.023, 0.103, 0.603, 0.904]
-EoT_values = []
-data["Neural Networks"] = (
-    ["MLP"] * len(Noise_Steps)
-    + ["MLP_skip"] * len(Noise_Steps)
-    # + ["EoT"] * len(Noise_Steps)
-)
-data["Noise Steps"] = Noise_Steps * 2
-data["Mean Performance Error"] = MLP_values + MLP_skip_values + EoT_values
 
+df_MLP_skip = pd.read_csv("scripts/graph_code/weights_data_MLP_skip.csv")
+df_MLP = pd.read_csv("scripts/graph_code/weights_data_MLP.csv")
+df_MLP_skip["Neural Networks"] = "MLP_skip"
+df_MLP["Neural Networks"] = "MLP"
 fig, ax = plt.subplots()
-data = pd.DataFrame(data)
+data = pd.concat([df_MLP_skip, df_MLP], ignore_index=True)
 sns.lineplot(
     data=data,
-    x="Noise Steps",
+    x="Weights",
     y="Mean Performance Error",
     hue="Neural Networks",
     marker="o",
     ax=ax,
 )
-plt.xlabel("Time Steps", fontsize=14)
+plt.xlabel("Classifier-Free Guidance Weights", fontsize=14)
 plt.ylabel("Mean Performance Error[%]", fontsize=14)
-plt.title("Epochs=1000", fontsize=14)
+plt.title("Epochs=1000, Time step=10", fontsize=14)
 plt.xscale("log")
 ax.xaxis.set_major_formatter(ScalarFormatter())
-
 plt.yscale("log")
 plt.gca().yaxis.set_major_locator(LogLocator(base=10.0, numticks=5, subs=(0.5, 2)))
 ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1.0))
+
 plt.show()
