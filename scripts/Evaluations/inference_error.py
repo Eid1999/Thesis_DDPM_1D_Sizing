@@ -55,7 +55,7 @@ def inference_error(
     )
     y_Sampled = reverse_normalization(y_Sampled, df_y.copy())
     X_Sampled = reverse_normalization(X_Sampled, df_X.copy())
-    error_1 = np.mean(
+    error_1 = np.min(
         np.abs(
             np.divide(
                 (y_test[:n_samples] - y_Sampled[:n_samples]),
@@ -66,7 +66,7 @@ def inference_error(
         ),
         axis=0,
     )
-    error_2 = np.mean(
+    error_2 = np.min(
         np.abs(
             np.divide(
                 (
@@ -80,7 +80,7 @@ def inference_error(
         ),
         axis=0,
     )
-    error_3 = np.mean(
+    error_3 = np.min(
         np.abs(
             np.divide(
                 (y_test[n_samples * 2 :] - y_Sampled[n_samples * 2 :]),

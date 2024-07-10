@@ -35,10 +35,10 @@ def HYPERPARAMETERS_DDPM(
     delete_previous_study: bool = True,
 ):
     def objective(trial):
-        real_layers = trial.suggest_int("num_layers", 3, 50)
+        real_layers = trial.suggest_int("num_layers", 3, 30)
 
         num_layers = (
-            real_layers if nn_type == "MLP" or "EoT" else math.ceil(real_layers / 2)
+            real_layers if nn_type == ("MLP" or "EoT") else math.ceil(real_layers / 2)
         )
 
         params = {
@@ -55,8 +55,8 @@ def HYPERPARAMETERS_DDPM(
             ),
             "learning_rate": trial.suggest_float(
                 "learning_rate",
-                1e-7,
-                1e-3,
+                1e-5,
+                1e-2,
                 log=True,
             ),
             "loss_type": trial.suggest_categorical(
@@ -120,6 +120,7 @@ def HYPERPARAMETERS_DDPM(
         study_name=f"{nn_type}study",
         storage=f"sqlite:///optuna_studies/{nn_type}/Noise_Steps{noise_steps}.db",
         load_if_exists=True,
+        pruner=optuna.pruners.SuccessiveHalvingPruner(min_resource=3),
     )
     study.optimize(objective, n_trials=n_trials)  # nn_type: ignore
     best_trial = study.best_trial
@@ -128,7 +129,7 @@ def HYPERPARAMETERS_DDPM(
     real_layers = best_trial.params["num_layers"]
 
     num_layers = (
-        real_layers if nn_type == "MLP" or "EoT" else math.ceil(real_layers / 2)
+        real_layers if nn_type == ("MLP" or "EoT") else math.ceil(real_layers / 2)
     )
     data[nn_type].update(
         {

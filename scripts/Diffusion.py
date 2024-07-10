@@ -1,3 +1,7 @@
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from libraries import *
 from Evaluations import test_performaces
 from Evaluations.plot_gradient import plot_grad_flow
@@ -11,7 +15,7 @@ class DiffusionDPM:
         vect_size: int = 91,
         device: str = "cuda",
         X_norm_max: np.ndarray = np.array([1] * 12),
-        X_norm_min: np.ndarray = np.array([1] * 12),
+        X_norm_min: np.ndarray = np.array([-1] * 12),
     ) -> None:
         seed_value = 0
         torch.manual_seed(seed_value)
@@ -114,7 +118,7 @@ class DiffusionDPM:
                     torch.randn(
                         n, self.vect_size, 1, device=self.device, dtype=torch.float32
                     ).squeeze()
-                    if i > 1
+                    if i > 0
                     else torch.zeros_like(x)
                 )
                 uncoditional_predicted_noise = model(x, t)
@@ -255,10 +259,11 @@ class DiffusionDPM:
                     self.model.state_dict(),
                     f"./weights/{type}/noise{self.noise_steps}/EPOCH{epoch}-PError: {np.mean(error):.4f}.pth",
                 )
-        torch.save(
-            self.model.state_dict(),
-            f"./weights/{type}/noise{self.noise_steps}/EPOCH{epochs}.pth",
-        )
+        if trial is None:
+            torch.save(
+                self.model.state_dict(),
+                f"./weights/{type}/noise{self.noise_steps}/EPOCH{epochs}.pth",
+            )
         del self.model
         if y_val is not None:
             return error.mean()

@@ -28,7 +28,7 @@ def see_noise_data(
         )
     )
     plt.suptitle("Forward Process", fontsize=16)
-    axs[0].set_title(f"Noise:0%, Sizing Error:0", fontsize=14)
+    axs[0].set_title(f"Noise:0%, Sizing Error:0%", fontsize=14)
     sns.histplot(
         pd.DataFrame(
             original_matrix,
@@ -71,7 +71,7 @@ def see_noise_data(
             )
         )
         axs[i].set_title(
-            f"Noise:{int(noise_step*100/(DDPM.noise_steps - 1))}%, Sizing Error:{error.mean().mean():.3f}",
+            f"Noise:{int(noise_step*100/(DDPM.noise_steps - 1))}%,Sizing Error:{error.mean().mean()*100:.1f}%",
             fontsize=14,
         )
         sns.histplot(

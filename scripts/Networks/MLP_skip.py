@@ -59,5 +59,6 @@ class MLP_skip(MLP):
                     x + X[f"{len(self.hidden_layers)-i-1}"] + t_emb,
                 )
             )
+
             X[f"{i}"] = x
         return x

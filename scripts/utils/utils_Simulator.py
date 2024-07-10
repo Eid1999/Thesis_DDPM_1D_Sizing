@@ -50,7 +50,7 @@ def epoch_loop(
     optimizer = optim.Adam(
         model.parameters(),
         lr=lr,
-        weight_decay=1e-4,
+        weight_decay=1e-7,
     )
     patience = 0
     dataloader = DataLoader(

@@ -5,6 +5,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from libraries import *
 
 from Dataset import normalization, reverse_normalization
+import matplotlib.ticker as ticker
 
 
 def histogram(
@@ -37,28 +38,39 @@ def histogram(
         df_X.copy(),
     )
 
-    fig, axs = plt.subplots(1, X_Sampled.shape[1])
-    for i, col in enumerate(df_Sampled_hist.columns):
-        axs[i].set_title(f"Sample {df_Sampled_hist.columns[i]}")
-        plot_data = pd.DataFrame(
-            {"Sampled Data": df_Sampled_hist[col], "Real data": X_train_hist[col]}
-        )
-        sns.histplot(
-            plot_data,
-            ax=axs[i],
-            log_scale=True,
-            bins=100,
-            kde=True,  # If you want to add a KDE line
-            legend=True if i == len(axs) - 1 else False,
-        )
-        # axs[0, i].set_ylim(0, len(df_Sampled_hist))
-        # pdb.set_trace()
+    fig, axs = plt.subplots(X_Sampled.shape[1] // 2, 2)
+    for i in range(axs.shape[1]):
+        for j in range(axs.shape[0]):
+            axs[j, i].set_title(f"Sample {df_Sampled_hist.columns[(i + 1) * j]}")
+            plot_data = pd.DataFrame(
+                {
+                    "Sampled Data": df_Sampled_hist.iloc[:, (i + 1) * j],
+                    "Real data": X_train_hist.iloc[:, (i + 1) * j],
+                }
+            )
+            sns.histplot(
+                plot_data,
+                ax=axs[j, i],
+                log_scale=True,
+                bins=100,
+                kde=True,  # If you want to add a KDE line
+                legend=(
+                    True
+                    if j == axs.shape[0] // 2 - 1 and i == axs.shape[1] - 1
+                    else False
+                ),
+            )
+            # if j == 0:
+            #     for ind, label in enumerate(axs[j, i].get_xticklabels()):
+            #         label.set_visible(False)
+
     sns.move_legend(
-        axs[len(axs) - 1],
+        axs[axs.shape[0] // 2 - 1, axs.shape[1] - 1],
         loc="center left",
         bbox_to_anchor=[1, 0.5],
         fancybox=True,
         shadow=True,
+        fontsize="10",
     )
 
     plt.show()

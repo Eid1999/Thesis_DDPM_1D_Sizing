@@ -22,6 +22,7 @@ class MLP(nn.Module):
         torch.manual_seed(seed_value)
         torch.cuda.manual_seed(seed_value)
         np.random.seed(seed_value)
+        torch.manual_seed(0)
         super(MLP, self).__init__()
         self.dim = dim
 

@@ -16,6 +16,10 @@ from Evaluations.Simulator import Test_error
 
 
 def main():
+    torch.manual_seed(0)
+    torch.cuda.manual_seed(0)
+    np.random.seed(0)
+    torch.manual_seed(0)
     device = "cuda"
     dataframe = pd.DataFrame(pd.read_csv("./data/vcota.csv"))
     df_X = dataframe[

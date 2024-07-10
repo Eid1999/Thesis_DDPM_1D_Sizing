@@ -31,6 +31,10 @@ nn_type = "MLP"  ## define NN type
 
 
 def main():
+    torch.manual_seed(0)
+    torch.cuda.manual_seed(0)
+    np.random.seed(0)
+    torch.manual_seed(0)
     nn_map = {
         "MLP_skip": MLP_skip,
         "MLP": MLP,
@@ -97,7 +101,7 @@ def main():
                     0.34e-6,
                     0.34e-6,
                     0.34e-6,
-                    0.34e-6,
+                    0.3e-6,
                     0.34e-6,
                 ]
             )[None],
@@ -145,7 +149,7 @@ def main():
     X_val = torch.tensor(X_val, dtype=torch.float32, device=DDPM.device)
     y_val = torch.tensor(y_val, dtype=torch.float32, device=DDPM.device)
     y_test = torch.tensor(y_test, dtype=torch.float32, device=DDPM.device)
-    see_noise_data(DDPM, X_train, df_X)
+    # see_noise_data(DDPM, X_train, df_X)
     # hyper_parameters = HYPERPARAMETERS_DDPM(
     #     X_train,
     #     y_train,
@@ -157,11 +161,11 @@ def main():
     #     nn_type,
     #     hyper_parameters["noise_steps"],
     #     epoch=1000,
-    #     n_trials=0,
+    #     n_trials=10,
     #     X_min=norm_min,
     #     X_max=norm_max,
-    #     frequency_print=200,
-    #     delete_previous_study=False,
+    #     frequency_print=50,
+    #     delete_previous_study=True,
     #     guidance_weight=hyper_parameters["guidance_weight"],
     # )
 
