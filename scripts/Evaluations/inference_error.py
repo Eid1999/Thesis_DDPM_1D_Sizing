@@ -8,17 +8,16 @@ from Dataset import normalization, reverse_normalization
 
 
 def inference_error(
-    y_test,
+    nn_type: str,
     DDPM,
-    best_weight,
-    df_X,
-    df_y,
-    display=False,
-    n_samples=100,
+    best_weight: float,
+    df_X: pd.DataFrame,
+    df_y: pd.DataFrame,
+    display: bool = False,
+    n_samples: int = 100,
+    save: bool = False,
 ) -> None:
-    if display:
-        print("\n\n\nTarget Predictions")
-    y_test = np.array(
+    y_target = np.array(
         np.concatenate(
             [
                 np.tile([50, 300e-6, 60e6, 65], (n_samples, 1)),
@@ -27,13 +26,14 @@ def inference_error(
             ]
         )
     )
-    y_test = pd.DataFrame(y_test, columns=df_y.columns)
-    y_test.to_csv("y_test.csv")
+    if display:
+        print("\n\n\nTarget Predictions")
+    y_target = pd.DataFrame(y_target, columns=df_y.columns)
 
-    y_test_norm = normalization(y_test, df_original=df_y).values
-    y_test_norm = torch.tensor(y_test_norm, dtype=torch.float32, device=DDPM.device)
+    y_target_norm = normalization(y_target, df_original=df_y).values
+    y_target_norm = torch.tensor(y_target_norm, dtype=torch.float32, device=DDPM.device)
     X_Sampled = DDPM.sampling(
-        DDPM.model.cuda(), y_test_norm.shape[0], y_test_norm, weight=best_weight
+        DDPM.model.cuda(), y_target_norm.shape[0], y_target_norm, weight=best_weight
     )
     with open("./templates/network_templates.json", "r") as file:
         hyper_parameters = json.load(file)["Simulator"]
@@ -58,10 +58,10 @@ def inference_error(
     error_1 = np.min(
         np.abs(
             np.divide(
-                (y_test[:n_samples] - y_Sampled[:n_samples]),
-                y_test[:n_samples],
-                out=np.zeros_like(y_test[:n_samples]),
-                where=(y_test[:n_samples] != 0),
+                (y_target[:n_samples] - y_Sampled[:n_samples]),
+                y_target[:n_samples],
+                out=np.zeros_like(y_target[:n_samples]),
+                where=(y_target[:n_samples] != 0),
             )
         ),
         axis=0,
@@ -70,12 +70,12 @@ def inference_error(
         np.abs(
             np.divide(
                 (
-                    y_test[n_samples : n_samples * 2]
+                    y_target[n_samples : n_samples * 2]
                     - y_Sampled[n_samples : n_samples * 2]
                 ),
-                y_test[n_samples : n_samples * 2],
-                out=np.zeros_like(y_test[n_samples : n_samples * 2]),
-                where=(y_test[n_samples : n_samples * 2] != 0),
+                y_target[n_samples : n_samples * 2],
+                out=np.zeros_like(y_target[n_samples : n_samples * 2]),
+                where=(y_target[n_samples : n_samples * 2] != 0),
             )
         ),
         axis=0,
@@ -83,10 +83,10 @@ def inference_error(
     error_3 = np.min(
         np.abs(
             np.divide(
-                (y_test[n_samples * 2 :] - y_Sampled[n_samples * 2 :]),
-                y_test[n_samples * 2 :],
-                out=np.zeros_like(y_test[n_samples * 2 :]),
-                where=(y_test[n_samples * 2 :] != 0),
+                (y_target[n_samples * 2 :] - y_Sampled[n_samples * 2 :]),
+                y_target[n_samples * 2 :],
+                out=np.zeros_like(y_target[n_samples * 2 :]),
+                where=(y_target[n_samples * 2 :] != 0),
             )
         ),
         axis=0,
@@ -103,3 +103,8 @@ def inference_error(
             f"\nTarget3:\n{X_Sampled[n_samples*2:].describe().loc[['mean', 'std']].T}"
         )
         print(f"Error:\n{error_3}")
+    if save:
+        path = "points_to_simulate/target/"
+        X_Sampled.to_csv(f"{path}sizing_target{nn_type}.csv")
+        y_target.to_csv(f"{path}real_target{nn_type}.csv")
+        y_Sampled.to_csv(f"{path}nn_target{nn_type}.csv")

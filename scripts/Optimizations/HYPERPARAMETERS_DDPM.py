@@ -35,11 +35,9 @@ def HYPERPARAMETERS_DDPM(
     delete_previous_study: bool = True,
 ):
     def objective(trial):
-        real_layers = trial.suggest_int("num_layers", 3, 30)
+        real_layers = trial.suggest_int("num_layers", 3, 20)
 
-        num_layers = (
-            real_layers if nn_type == ("MLP" or "EoT") else math.ceil(real_layers / 2)
-        )
+        num_layers = real_layers if nn_type in ("MLP") else math.ceil(real_layers / 2)
 
         params = {
             "nn_template": {
@@ -72,12 +70,12 @@ def HYPERPARAMETERS_DDPM(
         }
         if nn_type == "EoT":
             params["nn_template"]["num_heads"] = [
-                trial.suggest_int(f"num_heads{i+1}", 1, 30, log=True)
-                for i in range(num_layers + 1)
+                trial.suggest_int(f"num_heads{i+1}", 1, 32, log=True)
+                for i in range(real_layers + 1)
             ]
         if "guidance_weight" not in params:
             params["guidance_weight"] = guidance_weight
-        if nn_type == "MLP_skip":
+        if nn_type in ("MLP_skip", "EoT"):
             for i in reversed(range(real_layers // 2)):
                 params["nn_template"]["hidden_layers"].append(
                     params["nn_template"]["hidden_layers"][i]
@@ -128,9 +126,7 @@ def HYPERPARAMETERS_DDPM(
         data = json.load(file)
     real_layers = best_trial.params["num_layers"]
 
-    num_layers = (
-        real_layers if nn_type == ("MLP" or "EoT") else math.ceil(real_layers / 2)
-    )
+    num_layers = real_layers if nn_type in ("MLP") else math.ceil(real_layers / 2)
     data[nn_type].update(
         {
             "nn_template": {
@@ -144,7 +140,7 @@ def HYPERPARAMETERS_DDPM(
             # "guidance_weight": best_trial.params["guidance_weight"],
         }
     )
-    if nn_type == "MLP_skip":
+    if nn_type in ("MLP_skip", "EoT"):
         for i in reversed(range(real_layers // 2)):
             data[nn_type]["nn_template"]["hidden_layers"].append(
                 best_trial.params[f"hidden_size{i+1}"]
@@ -152,7 +148,7 @@ def HYPERPARAMETERS_DDPM(
 
     if nn_type == "EoT":
         data[nn_type]["nn_template"]["num_heads"] = [
-            best_trial.params[f"num_heads{i+1}"] for i in range(num_layers + 1)
+            best_trial.params[f"num_heads{i+1}"] for i in range(real_layers + 1)
         ]
     with open(f"./templates/network_templates.json", "w") as file:
         json.dump(data, file, indent=4)

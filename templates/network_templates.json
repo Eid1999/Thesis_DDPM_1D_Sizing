@@ -11,7 +11,7 @@
         "learning_rate": 0.0016053955926854306,
         "loss_type": "l1",
         "noise_steps": 10,
-        "guidance_weight": 0.11033826630794374
+        "guidance_weight": 0.1038172931758462
     },
     "MLP_skip": {
         "nn_template": {
@@ -42,46 +42,36 @@
         "batch_size": 206,
         "learning_rate": 0.0005284157412383816,
         "loss_type": "l1",
-        "guidance_weight": 0.05647168120125802,
+        "guidance_weight": 0.10212106530639768,
         "noise_steps": 10
     },
     "EoT": {
         "nn_template": {
             "hidden_layers": [
-                202,
-                1917,
-                1915,
-                901,
-                317,
-                1884,
-                239,
-                690,
-                262,
-                725,
-                201,
-                245,
-                206,
-                450,
-                752,
-                1991,
-                1272,
-                1879,
-                759,
-                203,
-                264,
-                1975,
-                1904
+                773,
+                1056,
+                340,
+                846,
+                208
             ],
             "num_heads": [
                 6,
-                2
+                2,
+                3,
+                2,
+                2,
+                2,
+                1,
+                12,
+                1,
+                3
             ]
         },
-        "batch_size": 104,
-        "learning_rate": 1.4703622847641759e-06,
-        "loss_type": "mse",
-        "noise_steps": 1000,
-        "guidance_weight": 0.3
+        "batch_size": 167,
+        "learning_rate": 5.5165667342678884e-05,
+        "loss_type": "l1",
+        "noise_steps": 100,
+        "guidance_weight": 0.3247990627896279
     },
     "Simulator": {
         "nn_template": {

@@ -7,8 +7,8 @@ from matplotlib.ticker import LogLocator
 
 data = {}
 Noise_Steps = [1, 5, 10, 50, 100, 1000, 2000]
-MLP_values = [1.5, 0.018, 0.0165, 0.022, 0.039, 0.567, 0.807]
-MLP_skip_values = [1.2, 0.0225, 0.019, 0.023, 0.103, 0.603, 0.904]
+MLP_values = [1.5, 0.12, 0.023, 0.025, 0.039, 0.567, 0.607]
+MLP_skip_values = [1.2, 0.15, 0.023, 0.022, 0.043, 0.403, 0.504]
 EoT_values = []
 data["Neural Networks"] = (
     ["MLP"] * len(Noise_Steps)

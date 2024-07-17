@@ -14,9 +14,11 @@ def test_performaces(
     df_X: pd.DataFrame,
     df_y: pd.DataFrame,
     display: bool = False,
+    save: bool = False,
+    nn_type: str = "MLP",
 ):
     if display:
-        print("\n\n\nPerformance Error")
+        print("\n\n\nTest Performance Error")
     X_Sampled = DDPM.sampling(
         DDPM.model.cuda(),
         y_test.shape[0],
@@ -62,4 +64,13 @@ def test_performaces(
     )
     if display:
         print(f"\n{error} \n Mean: {error.mean()}")
+    if save:
+        path = "points_to_simulate/test/"
+        df_X_Sampled = reverse_normalization(
+            pd.DataFrame(X_Sampled.detach().cpu().numpy(), columns=df_X.columns),
+            df_X.copy(),
+        )
+        df_X_Sampled.to_csv(f"{path}sizing_test{nn_type}.csv")
+        df_y_test.to_csv(f"{path}real_test{nn_type}.csv")
+        df_y_Sampled.to_csv(f"{path}nn_test{nn_type}.csv")
     return error

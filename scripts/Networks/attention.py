@@ -9,10 +9,10 @@ class MultiHeadAttention(nn.Module):
     def __init__(
         self,
         in_dim: int,
-        head_dim: int = 32,
+        head_dim: int = 37,
         num_heads: int = 8,
     ) -> None:
-        super(MultiHeadAttention, self).__init__()
+        super().__init__()
 
         self.in_dim = in_dim
         self.num_heads = num_heads
@@ -57,7 +57,7 @@ class MultiHeadAttention(nn.Module):
 
 
 class SelfAttention(nn.Module):
-    def __init__(self, in_dim: int, hidden_dim: int):
+    def __init__(self, in_dim: int, hidden_dim: int = 200):
         super(SelfAttention, self).__init__()
 
         self.in_dim = in_dim

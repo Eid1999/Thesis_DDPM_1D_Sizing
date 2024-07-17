@@ -30,3 +30,7 @@ scripts/train/__pycache__/*.cpython-310.pyc
 Code.code-workspace
 optuna_studies/MLP/*
 optuna_studies/*
+points_to_simulate/*
+data/DiffusionDataset-0-1024-1000-350uA-50dB-30MHz.csv
+scripts/graph_code/weights_data_MLP_skip.csv
+scripts/graph_code/weights_data_MLP.csv

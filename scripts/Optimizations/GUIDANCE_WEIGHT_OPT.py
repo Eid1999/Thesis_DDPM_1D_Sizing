@@ -24,10 +24,11 @@ def GUIDANCE_WEIGHT_OPT(
     df_y: pd.DataFrame,
     nn_type: str,
     n_trials: int = 2,
+    save_graph: bool = False,
 ) -> dict:
     def objective(trial):
         params = {
-            "weight": trial.suggest_float("weight", 0, 5),
+            "weight": trial.suggest_float("weight", 0.1, 5),
         }
         error = test_performaces(
             y_val,
@@ -63,9 +64,11 @@ def GUIDANCE_WEIGHT_OPT(
         "Weights": x_values,
         "Mean Performance Error": y_values,
     }
+
     fig, ax = plt.subplots()
     data = pd.DataFrame(data)
-    data.to_csv(f"./scripts/graph_code/weights_data_{nn_type}.csv", index=False)
+    if save_graph:
+        data.to_csv(f"./scripts/graph_code/weights_data_{nn_type}.csv", index=False)
     sns.lineplot(
         data=data,
         x="Weights",
