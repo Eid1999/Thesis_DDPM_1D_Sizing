@@ -33,6 +33,7 @@ def HYPERPARAMETERS_DDPM(
     guidance_weight: float = 0.3,
     frequency_print: int = 200,
     delete_previous_study: bool = True,
+    data_type: str = "vcota",
 ):
     def objective(trial):
         real_layers = trial.suggest_int("num_layers", 3, 20)
@@ -101,14 +102,18 @@ def HYPERPARAMETERS_DDPM(
             trial=trial,
             early_stop=False,
             frequency_print=frequency_print,
+            data_type=data_type,
         )
         del DDPM
         if error is None:
             exit()
         return error
 
+    os.makedirs(f"./optuna_studies/{data_type}/{nn_type}", exist_ok=True)
     if delete_previous_study:
-        files = glob.glob(f"./optuna_studies/{nn_type}/Noise_Steps{noise_steps}*")
+        files = glob.glob(
+            f"./optuna_studies/{data_type}/{nn_type}/Noise_Steps{noise_steps}*"
+        )
         if len(files) != 0:
             for f in files:
                 os.remove(f)
@@ -116,13 +121,13 @@ def HYPERPARAMETERS_DDPM(
         direction="minimize",
         sampler=optuna.samplers.TPESampler(seed=0),
         study_name=f"{nn_type}study",
-        storage=f"sqlite:///optuna_studies/{nn_type}/Noise_Steps{noise_steps}.db",
+        storage=f"sqlite:///optuna_studies/{data_type}/{nn_type}/Noise_Steps{noise_steps}.db",
         load_if_exists=True,
         pruner=optuna.pruners.SuccessiveHalvingPruner(min_resource=3),
     )
     study.optimize(objective, n_trials=n_trials)  # nn_type: ignore
     best_trial = study.best_trial
-    with open(f"./templates/network_templates.json", "r") as file:
+    with open(f"./templates/network_templates_{data_type}.json", "r") as file:
         data = json.load(file)
     real_layers = best_trial.params["num_layers"]
 
@@ -150,20 +155,22 @@ def HYPERPARAMETERS_DDPM(
         data[nn_type]["nn_template"]["num_heads"] = [
             best_trial.params[f"num_heads{i+1}"] for i in range(real_layers + 1)
         ]
-    with open(f"./templates/network_templates.json", "w") as file:
+    with open(f"./templates/network_templates_{data_type}.json", "w") as file:
         json.dump(data, file, indent=4)
 
     plot_intermediate_values(study).update_layout(
         xaxis_title="Epoch",
         yaxis_title="Mean Performace Error",
-    ).write_html(f"./html_graphs/epoch_graph{nn_type}.html")
-    plot_timeline(study).write_html(f"./html_graphs/plot_timeline{nn_type}.html")
+    ).write_html(f"./html_graphs/{data_type}/epoch_graph{nn_type}.html")
+    plot_timeline(study).write_html(
+        f"./html_graphs/{data_type}/plot_timeline{nn_type}.html"
+    )
     # plot_parallel_coordinate(study).write_html("parallel_coordinate.html")
     plot_param_importances(study).write_html(
-        f"./html_graphs/param_importances{nn_type}.html"
+        f"./html_graphs/{data_type}/param_importances{nn_type}.html"
     )
     plot_optimization_history(study).update_layout(
         xaxis_title="Trials",
         yaxis_title="Mean Performace Error",
-    ).write_html(f"./html_graphs/optimization_history{nn_type}.html")
+    ).write_html(f"./html_graphs/{data_type}/optimization_history{nn_type}.html")
     return data[nn_type]

@@ -172,6 +172,7 @@ class DiffusionDPM:
         frequency_print: int = 50,
         visualise_grad: bool = False,
         noise_steps: int = 1000,
+        data_type: str = "vcota",
     ) -> Optional[float]:
         self.model = network(
             input_size=x.shape[1],
@@ -194,8 +195,13 @@ class DiffusionDPM:
             dataloader = DataLoader(
                 TensorDataset(x), batch_size=batch_size, shuffle=False
             )
+        os.makedirs(
+            f"./weights/{data_type}/{type}/noise{self.noise_steps}", exist_ok=True
+        )
         if trial == None:
-            files = glob.glob(f"./weights/{type}/noise{self.noise_steps}/*.pth")
+            files = glob.glob(
+                f"./weights/{data_type}/{type}/noise{self.noise_steps}/*.pth"
+            )
             if len(files) != 0:
                 for f in files:
                     os.remove(f)
@@ -206,7 +212,7 @@ class DiffusionDPM:
         counter = 0
         self.model.eval()
         pbar = tqdm(range(epochs))
-        os.makedirs(f"./weights/{type}/noise{self.noise_steps}", exist_ok=True)
+
         for epoch in pbar:
             batch_loss_training = []
 
@@ -234,6 +240,7 @@ class DiffusionDPM:
                         df_X,
                         df_y,
                         display=False,
+                        data_type=data_type,
                     )
 
                     if early_stop:
@@ -257,13 +264,8 @@ class DiffusionDPM:
             if trial is None and (epoch) % frequency_print == 0:
                 torch.save(
                     self.model.state_dict(),
-                    f"./weights/{type}/noise{self.noise_steps}/EPOCH{epoch}-PError: {np.mean(error):.4f}.pth",
+                    f"./weights/{data_type}/{type}/noise{self.noise_steps}/EPOCH{epoch+1}-PError: {np.mean(error):.4f}.pth",
                 )
-        if trial is None:
-            torch.save(
-                self.model.state_dict(),
-                f"./weights/{type}/noise{self.noise_steps}/EPOCH{epochs}.pth",
-            )
         del self.model
         if y_val is not None:
             return error.mean()

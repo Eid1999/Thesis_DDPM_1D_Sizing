@@ -18,7 +18,11 @@ def see_noise_data(
         original_matrix,
         columns=df_X.columns,
     )
-    norm_original_matrix = reverse_normalization(original_matrix, df_X.copy())
+    norm_original_matrix = reverse_normalization(
+        original_matrix,
+        df_X.copy(),
+        data_type="vcota",
+    )
     error = np.abs(
         np.divide(
             (norm_original_matrix - norm_original_matrix),
@@ -27,13 +31,12 @@ def see_noise_data(
             where=(original_matrix != 0),
         )
     )
+    strip_columns = df_X.columns.str.replace("_", "")
+    original_matrix.columns = strip_columns
     plt.suptitle("Forward Process", fontsize=16)
     axs[0].set_title(f"Noise:0%, Sizing Error:0%", fontsize=14)
     sns.histplot(
-        pd.DataFrame(
-            original_matrix,
-            columns=df_X.columns,
-        ),
+        original_matrix,
         legend=False,
         # cmap="crest",
         ax=axs[0],
@@ -59,7 +62,9 @@ def see_noise_data(
             matrix_with_noise_array, columns=df_X.columns
         )
         norm_matrix_with_noise_array = reverse_normalization(
-            matrix_with_noise_array, df_X.copy()
+            matrix_with_noise_array,
+            df_X.copy(),
+            data_type=data_type,
         )
 
         error = np.abs(
@@ -74,11 +79,9 @@ def see_noise_data(
             f"Noise:{int(noise_step*100/(DDPM.noise_steps - 1))}%,Sizing Error:{error.mean().mean()*100:.1f}%",
             fontsize=14,
         )
+        matrix_with_noise_array.columns = strip_columns
         sns.histplot(
-            pd.DataFrame(
-                matrix_with_noise_array,
-                columns=df_X.columns,
-            ),
+            matrix_with_noise_array,
             legend=True if i == len(axs) - 1 else False,
             ax=axs[i],
         )

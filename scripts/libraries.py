@@ -32,3 +32,5 @@ from optuna.trial import Trial
 import os
 import pdb
 from torch.utils.data import Dataset
+
+data_type = "folded_vcota"

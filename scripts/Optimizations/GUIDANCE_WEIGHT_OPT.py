@@ -25,10 +25,11 @@ def GUIDANCE_WEIGHT_OPT(
     nn_type: str,
     n_trials: int = 2,
     save_graph: bool = False,
+    data_type: str = "vcota",
 ) -> dict:
     def objective(trial):
         params = {
-            "weight": trial.suggest_float("weight", 0.1, 5),
+            "weight": trial.suggest_float("weight", 0, 5),
         }
         error = test_performaces(
             y_val,
@@ -37,6 +38,7 @@ def GUIDANCE_WEIGHT_OPT(
             df_X,
             df_y,
             display=False,
+            data_type=data_type,
         )
 
         return np.mean(error)
@@ -46,12 +48,12 @@ def GUIDANCE_WEIGHT_OPT(
         direction="minimize"
     )  # We want to minimize the objective function
     study.optimize(objective, n_trials=n_trials)
-    with open(f"./templates/network_templates.json", "r") as file:
+    with open(f"./templates/network_templates_{data_type}.json", "r") as file:
         data = json.load(file)
     best_trial = study.best_trial
     data[nn_type]["guidance_weight"] = best_trial.params["weight"]
 
-    with open(f"./templates/network_templates.json", "w") as file:
+    with open(f"./templates/network_templates_{data_type}.json", "w") as file:
         json.dump(data, file, indent=4)
     x_values = []
     y_values = []
@@ -68,7 +70,9 @@ def GUIDANCE_WEIGHT_OPT(
     fig, ax = plt.subplots()
     data = pd.DataFrame(data)
     if save_graph:
-        data.to_csv(f"./scripts/graph_code/weights_data_{nn_type}.csv", index=False)
+        data.to_csv(
+            f"./scripts/graph_code/{data_type}/weights_data_{nn_type}.csv", index=False
+        )
     sns.lineplot(
         data=data,
         x="Weights",
@@ -81,7 +85,7 @@ def GUIDANCE_WEIGHT_OPT(
     plt.ylabel("Mean Performance Error[%]", fontsize=14)
     plt.title("Epochs=500,Noise Step=100, Scaler=0.05", fontsize=14)
     ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1.0))
-    # plt.xscale("log")
+    plt.xscale("log")
     plt.show()
 
     return hyperparameter

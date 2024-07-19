@@ -56,7 +56,7 @@ def epoch_loop(
     dataloader = DataLoader(
         TensorDataset(X_train, y_train), batch_size=batch_size, shuffle=True
     )
-    loss_fn = nn.MSELoss(reduction="mean")
+    loss_fn = nn.L1Loss(reduction="mean")
     scheduler = lr_scheduler.ExponentialLR(optimizer, gamma=0.99)
     val_loss = Eval_loop(X_val, y_val, model, loss_fn)
     pbar = tqdm(range(n_epoch))
@@ -66,8 +66,8 @@ def epoch_loop(
         scheduler.step()
         if trial is not None:
             trial.report(val_loss, step=epoch + 1)
-            if trial.should_prune():
-                raise optuna.exceptions.TrialPruned()
+            # if trial.should_prune():
+            #     raise optuna.exceptions.TrialPruned()
 
         val_loss = Eval_loop(X_val, y_val, model, loss_fn)
         if val_loss < last_val_loss:

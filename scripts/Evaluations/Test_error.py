@@ -13,10 +13,14 @@ def Test_error(
     best_weight: int,
     X_test: np.ndarray,
     df_X: pd.DataFrame,
+    data_type: str = "vcota",
 ) -> None:
     print("\n\n\nTest Error")
     X_Sampled = DDPM.sampling(
-        DDPM.model.cuda(), y_test.shape[0], y_test, weight=best_weight
+        DDPM.model.cuda(),
+        y_test.shape[0],
+        y_test,
+        weight=best_weight,
     )
     df_Sampled = pd.DataFrame(
         X_Sampled.cpu().numpy(),
@@ -26,10 +30,12 @@ def Test_error(
     df_Sampled = reverse_normalization(
         df_Sampled,
         df_X.copy(),
+        data_type=data_type,
     )
     df_X_test = reverse_normalization(
         df_X_test,
         df_X.copy(),
+        data_type=data_type,
     )
     error = np.mean(
         np.abs(

@@ -5,9 +5,9 @@ from matplotlib.ticker import ScalarFormatter
 import matplotlib.ticker as mtick
 from matplotlib.ticker import LogLocator
 
-
-df_MLP_skip = pd.read_csv("scripts/graph_code/weights_data_MLP_skip.csv")
-df_MLP = pd.read_csv("scripts/graph_code/weights_data_MLP.csv")
+data_type = "vcota"
+df_MLP_skip = pd.read_csv(f"scripts/graph_code/{data_type}/weights_data_MLP_skip.csv")
+df_MLP = pd.read_csv(f"scripts/graph_code/{data_type}/weights_data_MLP.csv")
 df_MLP_skip["Neural Networks"] = "MLP_skip"
 df_MLP["Neural Networks"] = "MLP"
 fig, ax = plt.subplots()

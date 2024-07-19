@@ -1,5 +1,6 @@
 import sys
 import os
+import re
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -27,9 +28,14 @@ from Diffusion import DiffusionDPM
 guidance = True
 from Networks import MLP, MLP_skip, EoT
 
-nn_type = "EoT"  ## define NN type
+nn_type = "MLP"  ## define NN type
 
-data_type = "vcota"
+
+def extract_error(file_name):
+    match = re.search(r"-PError(\d+)", file_name)
+    if match:
+        return int(match.group(1))  # Convert the extracted error to an integer
+    return float("inf")  # Return infinity if no match is found
 
 
 def main():
@@ -43,35 +49,117 @@ def main():
         "EoT": EoT,
     }
     network = nn_map[nn_type]
-
-    ############################### VCOTA DATASET #############################
-
     torch.cuda.empty_cache()
-    dataframe = pd.read_csv("./data/vcota.csv")
-    df_X = dataframe[
-        [
-            "w8",
-            "w6",
-            "w4",
-            "w10",
-            "w1",
-            "w0",
-            "l8",
-            "l6",
-            "l4",
-            "l10",
-            "l1",
-            "l0",
+    ############################### VCOTA DATASET #############################
+    if data_type == "vcota":
+
+        dataframe = pd.read_csv("./data/vcota.csv")
+        df_X = dataframe[
+            [
+                "w8",
+                "w6",
+                "w4",
+                "w10",
+                "w1",
+                "w0",
+                "l8",
+                "l6",
+                "l4",
+                "l10",
+                "l1",
+                "l0",
+            ]
         ]
-    ]
-    df_y = dataframe[
-        [
-            "gdc",
-            "idd",
-            "gbw",
-            "pm",
+        df_y = dataframe[
+            [
+                "gdc",
+                "idd",
+                "gbw",
+                "pm",
+            ]
         ]
-    ]
+        norm_min = normalization(
+            pd.DataFrame(
+                np.array(
+                    [
+                        1e-6,
+                        1e-6,
+                        1e-6,
+                        1e-6,
+                        1e-6,
+                        1e-6,
+                        0.34e-6,
+                        0.34e-6,
+                        0.34e-6,
+                        0.34e-6,
+                        0.3e-6,
+                        0.34e-6,
+                    ]
+                )[None],
+                columns=df_X.columns,
+            ),
+            df_original=df_X,
+        ).values
+        norm_max = normalization(
+            pd.DataFrame(
+                np.array(
+                    [
+                        100e-6,
+                        100e-6,
+                        100e-6,
+                        100e-6,
+                        100e-6,
+                        100e-6,
+                        0.94e-6,
+                        0.94e-6,
+                        0.94e-6,
+                        0.94e-6,
+                        0.94e-6,
+                        0.94e-6,
+                    ]
+                )[None],
+                columns=df_X.columns,
+            ),
+            df_original=df_X,
+        ).values
+    if data_type == "folded_vcota":
+        dataframe = pd.read_csv("./data/folded_vcota.csv")
+        df_X = dataframe[
+            [
+                "_wpmbiasp",
+                "_wp5",
+                "_wp4",
+                "_wp1",
+                "_wp0",
+                "_wnmbiasp",
+                "_wnmbiasn",
+                "_wn8",
+                "_wn6",
+                "_wn4",
+                "_wn0",
+                "_lp5",
+                "_lp4",
+                "_lp1",
+                "_lp0",
+                "_lnmbiasp",
+                "_lnmbiasn",
+                "_ln8",
+                "_ln6",
+                "_ln4",
+                "_ln0",
+            ]
+        ]
+        df_y = dataframe[
+            [
+                "gdc",
+                "idd",
+                "gbw",
+                "pm",
+                "cload",
+            ]
+        ]
+        norm_min = np.array([-1] * df_X.shape[-1])
+        norm_max = np.array([1] * df_X.shape[-1])
 
     # plot_dataset(df_y)
 
@@ -90,59 +178,8 @@ def main():
         test_size=0.5,
         random_state=0,
     )
-    # path = "points_to_simulate/"
-    # reverse_normalization(
-    #     pd.DataFrame(X_test.copy(), columns=df_X.columns), df_X.copy()
-    # ).to_csv(f"{path}sizing_test.csv")
-    # reverse_normalization(
-    #     pd.DataFrame(y_test.copy(), columns=df_y.columns), df_y.copy()
-    # ).to_csv(f"{path}performance_test.csv")
 
-    norm_min = normalization(
-        pd.DataFrame(
-            np.array(
-                [
-                    1e-6,
-                    1e-6,
-                    1e-6,
-                    1e-6,
-                    1e-6,
-                    1e-6,
-                    0.34e-6,
-                    0.34e-6,
-                    0.34e-6,
-                    0.34e-6,
-                    0.3e-6,
-                    0.34e-6,
-                ]
-            )[None],
-            columns=df_X.columns,
-        ),
-        df_original=df_X,
-    ).values
-    norm_max = normalization(
-        pd.DataFrame(
-            np.array(
-                [
-                    100e-6,
-                    100e-6,
-                    100e-6,
-                    100e-6,
-                    100e-6,
-                    100e-6,
-                    0.94e-6,
-                    0.94e-6,
-                    0.94e-6,
-                    0.94e-6,
-                    0.94e-6,
-                    0.94e-6,
-                ]
-            )[None],
-            columns=df_X.columns,
-        ),
-        df_original=df_X,
-    ).values
-    with open(f"./templates/network_templates.json", "r") as file:
+    with open(f"./templates/network_templates_{data_type}.json", "r") as file:
         data = json.load(file)
     hyper_parameters = data[nn_type]
     DDPM = DiffusionDPM(
@@ -161,39 +198,41 @@ def main():
     y_val = torch.tensor(y_val, dtype=torch.float32, device=DDPM.device)
     y_test = torch.tensor(y_test, dtype=torch.float32, device=DDPM.device)
     # see_noise_data(DDPM, X_train, df_X)
-    hyper_parameters = HYPERPARAMETERS_DDPM(
-        X_train,
-        y_train,
-        X_val,
-        y_val,
-        df_X,
-        df_y,
-        network,
-        nn_type,
-        hyper_parameters["noise_steps"],
-        epoch=1000,
-        n_trials=10,
-        X_min=norm_min,
-        X_max=norm_max,
-        frequency_print=50,
-        delete_previous_study=True,
-        guidance_weight=hyper_parameters["guidance_weight"],
-    )
+    # hyper_parameters = HYPERPARAMETERS_DDPM(
+    #     X_train,
+    #     y_train,
+    #     X_val,
+    #     y_val,
+    #     df_X,
+    #     df_y,
+    #     network,
+    #     nn_type,
+    #     hyper_parameters["noise_steps"],
+    #     epoch=1000,
+    #     n_trials=20,
+    #     X_min=norm_min,
+    #     X_max=norm_max,
+    #     frequency_print=50,
+    #     delete_previous_study=True,
+    #     guidance_weight=hyper_parameters["guidance_weight"],
+    #     data_type=data_type,
+    # )
 
-    DDPM.reverse_process(
-        X_train,
-        y_train,
-        network,
-        df_X,
-        df_y,
-        nn_type,
-        X_val=X_val,
-        y_val=y_val,
-        epochs=10000,
-        early_stop=False,
-        **hyper_parameters,
-        frequency_print=50,
-    )
+    # DDPM.reverse_process(
+    #     X_train,
+    #     y_train,
+    #     network,
+    #     df_X,
+    #     df_y,
+    #     nn_type,
+    #     X_val=X_val,
+    #     y_val=y_val,
+    #     epochs=10000,
+    #     early_stop=False,
+    #     **hyper_parameters,
+    #     frequency_print=50,
+    #     data_type=data_type,
+    # )
 
     DDPM.model = network(
         input_size=X.shape[1],
@@ -201,10 +240,8 @@ def main():
         y_dim=y.shape[-1],
         **hyper_parameters["nn_template"],
     ).cuda()
-    path_DDPM = max(
-        glob.glob(f"./weights/{nn_type}/noise{DDPM.noise_steps}/*.pth"),
-        key=os.path.getctime,
-    )
+    files = glob.glob(f"./weights/{data_type}/{nn_type}/noise{DDPM.noise_steps}/*.pth")
+    path_DDPM = min(files, key=extract_error)
     DDPM.model.load_state_dict(torch.load(path_DDPM))
     hyper_parameters = GUIDANCE_WEIGHT_OPT(
         DDPM,
@@ -214,6 +251,7 @@ def main():
         nn_type,
         n_trials=50,
         save_graph=False,
+        data_type=data_type,
     )
 
     ##### EVALUATIONS #################################
@@ -224,6 +262,7 @@ def main():
         y,
         df_X,
         X,
+        data_type=data_type,
     )
     Train_error(
         y_train,
@@ -231,6 +270,7 @@ def main():
         hyper_parameters["guidance_weight"],
         X_train,
         df_X,
+        data_type=data_type,
     )
 
     Test_error(
@@ -239,6 +279,7 @@ def main():
         hyper_parameters["guidance_weight"],
         X_test,
         df_X,
+        data_type=data_type,
     )
 
     test_performaces(
@@ -250,16 +291,18 @@ def main():
         display=True,
         save=True,
         nn_type=nn_type,
+        data_type=data_type,
     )
-    inference_error(
-        nn_type,
-        DDPM,
-        hyper_parameters["guidance_weight"],
-        df_X,
-        df_y,
-        display=True,
-        save=True,
-    )
+    # inference_error(
+    #     nn_type,
+    #     DDPM,
+    #     hyper_parameters["guidance_weight"],
+    #     df_X,
+    #     df_y,
+    #     display=True,
+    #     save=True,
+    #     data_type=data_type,
+    # )
 
 
 if __name__ == "__main__":

@@ -13,6 +13,7 @@ def Train_error(
     best_weight: int,
     X_train: torch.Tensor,
     df_X: pd.DataFrame,
+    data_type: str = "vcota",
 ):
     print("\n\n\nTrain Error")
     tile_y_train = np.tile(y_train[-1].cpu().numpy(), (1000, 1))
@@ -34,8 +35,16 @@ def Train_error(
         X_Sampled.cpu().numpy(),
         columns=df_X.columns,
     )
-    df_Sampled = reverse_normalization(X_Sampled, df_X.copy())
-    df_X_train = reverse_normalization(df_X_train, df_X.copy())
+    df_Sampled = reverse_normalization(
+        X_Sampled,
+        df_X.copy(),
+        data_type=data_type,
+    )
+    df_X_train = reverse_normalization(
+        df_X_train,
+        df_X.copy(),
+        data_type=data_type,
+    )
     error = np.mean(
         np.abs(
             np.divide(

@@ -14,6 +14,7 @@ def histogram(
     y: torch.Tensor,
     df_X: pd.DataFrame,
     X_train: torch.Tensor,
+    data_type: str = "vcota",
 ) -> None:
     X_Sampled = DDPM.sampling(
         DDPM.model.cuda(),
@@ -32,20 +33,26 @@ def histogram(
     df_Sampled_hist = reverse_normalization(
         X_Sampled,
         df_X.copy(),
+        data_type=data_type,
     )
     X_train_hist = reverse_normalization(
         df_X_train,
         df_X.copy(),
+        data_type=data_type,
     )
 
-    fig, axs = plt.subplots(X_Sampled.shape[1] // 2, 2)
+    fig, axs = plt.subplots(math.ceil(X_Sampled.shape[1] / 2), 2)
+    idx = 0
     for i in range(axs.shape[1]):
+        if X_Sampled.shape[1] - 1 < idx:
+            fig.delaxes(axs[j + 1, i])
+            break
         for j in range(axs.shape[0]):
-            axs[j, i].set_title(f"Sample {df_Sampled_hist.columns[(i + 1) * j]}")
+            axs[j, i].set_title(f"Sample {df_Sampled_hist.columns[idx]}")
             plot_data = pd.DataFrame(
                 {
-                    "Sampled Data": df_Sampled_hist.iloc[:, (i + 1) * j],
-                    "Real data": X_train_hist.iloc[:, (i + 1) * j],
+                    "Sampled Data": df_Sampled_hist.iloc[:, idx],
+                    "Real data": X_train_hist.iloc[:, idx],
                 }
             )
             sns.histplot(
@@ -60,6 +67,9 @@ def histogram(
                     else False
                 ),
             )
+
+            idx += 1
+
             # if j == 0:
             #     for ind, label in enumerate(axs[j, i].get_xticklabels()):
             #         label.set_visible(False)

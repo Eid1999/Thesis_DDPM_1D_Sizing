@@ -4,6 +4,7 @@ from libraries import *
 def reverse_normalization(
     df: pd.DataFrame,
     df_original: pd.DataFrame,
+    data_type: str = "vcota",
 ) -> pd.DataFrame:
 
     def reverse_standardize() -> pd.DataFrame:
@@ -19,7 +20,7 @@ def reverse_normalization(
         )
 
     df_original_copy = df_original.copy()
-    with open("./templates/network_templates.json", "r") as file:
+    with open(f"./templates/network_templates_{data_type}.json", "r") as file:
         norm_template = json.load(file)["Normalization"]
     for column in df.columns:
         if column in norm_template["log_norm"]:

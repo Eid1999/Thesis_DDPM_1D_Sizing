@@ -11,7 +11,7 @@
         "learning_rate": 0.0016053955926854306,
         "loss_type": "l1",
         "noise_steps": 10,
-        "guidance_weight": 0.1038172931758462
+        "guidance_weight": 0.1147082182470561
     },
     "MLP_skip": {
         "nn_template": {
@@ -42,7 +42,7 @@
         "batch_size": 206,
         "learning_rate": 0.0005284157412383816,
         "loss_type": "l1",
-        "guidance_weight": 0.10212106530639768,
+        "guidance_weight": 0.059419967015642616,
         "noise_steps": 10
     },
     "EoT": {

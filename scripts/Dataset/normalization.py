@@ -10,6 +10,7 @@ def normalization(
     df: pd.DataFrame,
     df_original: Optional[pd.DataFrame] = None,
     type_normalization: Optional["str"] = None,
+    data_type: str = "vcota",
 ) -> pd.DataFrame:
     def standardize() -> pd.DataFrame:
         scaler = StandardScaler()
@@ -32,7 +33,7 @@ def normalization(
     df_copy = df.copy()
     if df_original is not None:
         df_original_copy = df_original.copy()
-    with open("./templates/network_templates.json", "r") as file:
+    with open(f"./templates/network_templates_{data_type}.json", "r") as file:
         norm_template = json.load(file)["Normalization"]
     if type_normalization == None:
         type_normalization = norm_template["type_normalization"]

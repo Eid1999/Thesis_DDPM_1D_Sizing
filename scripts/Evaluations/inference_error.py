@@ -16,6 +16,7 @@ def inference_error(
     display: bool = False,
     n_samples: int = 100,
     save: bool = False,
+    data_type: str = "vcota",
 ) -> None:
     y_target = np.array(
         np.concatenate(
@@ -30,21 +31,46 @@ def inference_error(
         print("\n\n\nTarget Predictions")
     y_target = pd.DataFrame(y_target, columns=df_y.columns)
 
-    y_target_norm = normalization(y_target, df_original=df_y).values
-    y_target_norm = torch.tensor(y_target_norm, dtype=torch.float32, device=DDPM.device)
-    X_Sampled = DDPM.sampling(
-        DDPM.model.cuda(), y_target_norm.shape[0], y_target_norm, weight=best_weight
+    y_target_norm = normalization(
+        y_target,
+        df_original=df_y,
+        data_type=data_type,
+    ).values
+    y_target_norm = torch.tensor(
+        y_target_norm,
+        dtype=torch.float32,
+        device=DDPM.device,
     )
-    with open("./templates/network_templates.json", "r") as file:
+    X_Sampled = DDPM.sampling(
+        DDPM.model.cuda(),
+        y_target_norm.shape[0],
+        y_target_norm,
+        weight=best_weight,
+    )
+    with open(f"./templates/network_templates_{data_type}.json", "r") as file:
         hyper_parameters = json.load(file)["Simulator"]
     simulator = Simulator(
-        df_X.shape[-1],
-        df_y.shape[-1],
+        df_X.shape[-1] + 1 if data_type == "folded_vcota" else df_X.shape[-1],
+        df_y.shape[-1] - 1 if data_type == "folded_vcota" else df_y.shape[-1],
         **hyper_parameters["nn_template"],
     ).to("cuda")
-    simulator.load_state_dict(torch.load("./weights/Simulator.pth"))
+    simulator.load_state_dict(torch.load(f"./weights/{data_type}/Simulator.pth"))
 
-    y_Sampled = simulator(X_Sampled)
+    y_Sampled = simulator(
+        (
+            torch.cat((X_Sampled, y_target_norm[:, -1][:, None]), dim=-1)
+            if data_type == "folded_vcota"
+            else X_Sampled
+        ),
+    )
+    if data_type == "folded_vcota":
+        y_Sampled = torch.cat(
+            (
+                y_Sampled,
+                y_target_norm[:, -1][:, None],
+            ),
+            dim=-1,
+        )
     y_Sampled = pd.DataFrame(
         y_Sampled.detach().cpu().numpy(),
         columns=df_y.columns,
@@ -53,8 +79,16 @@ def inference_error(
         X_Sampled.cpu().numpy(),
         columns=df_X.columns,
     )
-    y_Sampled = reverse_normalization(y_Sampled, df_y.copy())
-    X_Sampled = reverse_normalization(X_Sampled, df_X.copy())
+    y_Sampled = reverse_normalization(
+        y_Sampled,
+        df_y.copy(),
+        data_type=data_type,
+    )
+    X_Sampled = reverse_normalization(
+        X_Sampled,
+        df_X.copy(),
+        data_type=data_type,
+    )
     error_1 = np.min(
         np.abs(
             np.divide(
@@ -104,7 +138,7 @@ def inference_error(
         )
         print(f"Error:\n{error_3}")
     if save:
-        path = "points_to_simulate/target/"
+        path = f"points_to_simulate/{data_type}/target/"
         X_Sampled.to_csv(f"{path}sizing_target{nn_type}.csv")
         y_target.to_csv(f"{path}real_target{nn_type}.csv")
         y_Sampled.to_csv(f"{path}nn_target{nn_type}.csv")

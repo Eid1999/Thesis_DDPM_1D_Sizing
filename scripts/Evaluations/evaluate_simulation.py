@@ -6,6 +6,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from libraries import *
 from tabulate import tabulate
 
+data_type = "vcota"
+
 
 def main():
     sim = {}
@@ -18,14 +20,14 @@ def main():
         real[type] = {}
         for nn in NN_type:
             sim[type][nn] = pd.read_csv(
-                f"./points_to_simulate/{type}/sizing_{type}{nn}_Performances.csv"
+                f"./points_to_simulate/{data_type}/{type}/sizing_{type}{nn}_Performances.csv"
             )[["gdc", "idd", "gbw", "pm"]]
 
             real[type][nn] = pd.read_csv(
-                f"./points_to_simulate/{type}/real_{type}{nn}.csv"
+                f"./points_to_simulate/{data_type}/{type}/real_{type}{nn}.csv"
             )[["gdc", "idd", "gbw", "pm"]]
             NN[type][nn] = pd.read_csv(
-                f"./points_to_simulate/{type}/nn_{type}{nn}.csv"
+                f"./points_to_simulate/{data_type}/{type}/nn_{type}{nn}.csv"
             )[["gdc", "idd", "gbw", "pm"]]
 
     print(f"Test\n")

@@ -11,6 +11,7 @@ def Test_error(
     y_test: torch.Tensor,
     model: nn.Module,
     df_y_original: pd.DataFrame,
+    data_type: str = "vcota",
 ):
     model.eval()
     y = model(X_test)
@@ -21,8 +22,16 @@ def Test_error(
     df_y_test = pd.DataFrame(
         y_test.detach().cpu().numpy(), columns=df_y_original.columns
     )
-    df_y = reverse_normalization(df_y, df_y_original.copy())
-    df_y_test = reverse_normalization(df_y_test, df_y_original.copy())
+    df_y = reverse_normalization(
+        df_y,
+        df_y_original.copy(),
+        data_type=data_type,
+    )
+    df_y_test = reverse_normalization(
+        df_y_test,
+        df_y_original.copy(),
+        data_type=data_type,
+    )
     error = np.mean(
         np.abs(
             np.divide(
