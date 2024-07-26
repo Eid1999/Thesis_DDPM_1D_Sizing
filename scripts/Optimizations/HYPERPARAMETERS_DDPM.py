@@ -172,5 +172,16 @@ def HYPERPARAMETERS_DDPM(
     plot_optimization_history(study).update_layout(
         xaxis_title="Trials",
         yaxis_title="Mean Performace Error",
-    ).write_html(f"./html_graphs/{data_type}/optimization_history{nn_type}.html")
+    ).update_yaxes(
+        type="log",
+        showgrid=True,
+        gridcolor="lightgrey",
+        zeroline=False,
+        showline=True,
+        linecolor="black",
+        ticks="outside",
+        tickformat=".2f",
+    ).write_html(
+        f"./html_graphs/{data_type}/optimization_history{nn_type}.html"
+    )
     return data[nn_type]

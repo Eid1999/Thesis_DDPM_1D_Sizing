@@ -183,17 +183,18 @@ class DiffusionDPM:
         optimizer = optim.Adam(
             self.model.parameters(),
             lr=learning_rate,
+            # weight_decay=1e-6,
         )
         Loss_Function = self.select_loss(loss_type)
         # Loss_Function= self.MAPE
         loss = 0
         if y is not None:
             dataloader = DataLoader(
-                TensorDataset(x, y), batch_size=batch_size, shuffle=False
+                TensorDataset(x, y), batch_size=batch_size, shuffle=True
             )
         else:
             dataloader = DataLoader(
-                TensorDataset(x), batch_size=batch_size, shuffle=False
+                TensorDataset(x), batch_size=batch_size, shuffle=True
             )
         os.makedirs(
             f"./weights/{data_type}/{type}/noise{self.noise_steps}", exist_ok=True
@@ -232,7 +233,7 @@ class DiffusionDPM:
                 batch_loss_training.append(loss.item())
             if y_val is not None:
                 self.model.eval()
-                if False or epoch % frequency_print == 0:
+                if epoch == epochs - 1 or epoch % frequency_print == 0:
                     error = test_performaces(
                         y_val,
                         self,
@@ -261,7 +262,9 @@ class DiffusionDPM:
                 )
                 self.model.train()
             training_loss.append(np.mean(batch_loss_training))
-            if trial is None and (epoch) % frequency_print == 0:
+            if trial is None and (
+                (epoch) % frequency_print == 0 or epoch == epochs - 1
+            ):
                 torch.save(
                     self.model.state_dict(),
                     f"./weights/{data_type}/{type}/noise{self.noise_steps}/EPOCH{epoch+1}-PError: {np.mean(error):.4f}.pth",

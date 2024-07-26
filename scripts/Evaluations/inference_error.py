@@ -24,6 +24,7 @@ def inference_error(
                 np.tile([50, 300e-6, 60e6, 65], (n_samples, 1)),
                 np.tile([40, 700e-6, 150e6, 55], (n_samples, 1)),
                 np.tile([50, 150e-6, 30e6, 65], (n_samples, 1)),
+                np.tile([53, 350e-6, 65e6, 55], (n_samples, 1)),
             ]
         )
     )
@@ -89,54 +90,27 @@ def inference_error(
         df_X.copy(),
         data_type=data_type,
     )
-    error_1 = np.min(
-        np.abs(
-            np.divide(
-                (y_target[:n_samples] - y_Sampled[:n_samples]),
-                y_target[:n_samples],
-                out=np.zeros_like(y_target[:n_samples]),
-                where=(y_target[:n_samples] != 0),
-            )
-        ),
-        axis=0,
-    )
-    error_2 = np.min(
-        np.abs(
-            np.divide(
-                (
-                    y_target[n_samples : n_samples * 2]
-                    - y_Sampled[n_samples : n_samples * 2]
-                ),
-                y_target[n_samples : n_samples * 2],
-                out=np.zeros_like(y_target[n_samples : n_samples * 2]),
-                where=(y_target[n_samples : n_samples * 2] != 0),
-            )
-        ),
-        axis=0,
-    )
-    error_3 = np.min(
-        np.abs(
-            np.divide(
-                (y_target[n_samples * 2 :] - y_Sampled[n_samples * 2 :]),
-                y_target[n_samples * 2 :],
-                out=np.zeros_like(y_target[n_samples * 2 :]),
-                where=(y_target[n_samples * 2 :] != 0),
-            )
-        ),
-        axis=0,
-    )
-    if display:
+    for i in range(len(y_target) // n_samples):
+        error = np.min(
+            np.abs(
+                np.divide(
+                    (
+                        y_target[n_samples * i : (1 + i) * n_samples]
+                        - y_Sampled[n_samples * i : (1 + i) * n_samples]
+                    ),
+                    y_target[n_samples * i : (1 + i) * n_samples],
+                    out=np.zeros_like(y_target[n_samples * i : (1 + i) * n_samples]),
+                    where=(y_target[n_samples * i : (1 + i) * n_samples] != 0),
+                )
+            ),
+            axis=0,
+        )
+        if display:
 
-        print(f"\nTarget1:\n{X_Sampled[:n_samples].describe().loc[['mean', 'std']].T}")
-        print(f"Error:\n{error_1}")
-        print(
-            f"\nTarget2:\n{X_Sampled[n_samples:n_samples*2].describe().loc[['mean', 'std']].T}"
-        )
-        print(f"Error:\n{error_2}")
-        print(
-            f"\nTarget3:\n{X_Sampled[n_samples*2:].describe().loc[['mean', 'std']].T}"
-        )
-        print(f"Error:\n{error_3}")
+            print(
+                f"\nTarget{i+1}:\n{X_Sampled[n_samples * i : (1 + i) * n_samples].describe().loc[['mean', 'std']].T}"
+            )
+            print(f"Error:\n{error}")
     if save:
         path = f"points_to_simulate/{data_type}/target/"
         X_Sampled.to_csv(f"{path}sizing_target{nn_type}.csv")

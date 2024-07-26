@@ -33,4 +33,6 @@ def reverse_normalization(
     for column in df.columns:
         if column in norm_template["log_norm"]:
             de_norm[column] = 10 ** (de_norm[column])
+        if "nf" in column:
+            de_norm[column] = de_norm[column].round(0).astype(int)
     return de_norm

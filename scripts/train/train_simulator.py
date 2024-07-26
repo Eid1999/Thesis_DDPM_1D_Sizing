@@ -22,7 +22,7 @@ def main():
     torch.manual_seed(0)
     device = "cuda"
     if data_type == "vcota":
-        dataframe = pd.DataFrame(pd.read_csv("./data/vcota.csv"))
+        dataframe = pd.DataFrame(pd.read_csv("./data/vcota.csv", sep="\s+"))  # type: ignore # ignore
         df_X = dataframe[
             [
                 "w8",
@@ -62,6 +62,18 @@ def main():
                 "_wn6",
                 "_wn4",
                 "_wn0",
+                "_nfpmbiasp",
+                "_nfp5",
+                "_nfp4",
+                "_nfp1",
+                "_nfp0",
+                "_nfnmbiasp",
+                "_nfnmbiasn",
+                "_nfn8",
+                "_nfn6",
+                "_nfn4",
+                "_nfn0",
+                "_lpmbiasp",
                 "_lp5",
                 "_lp4",
                 "_lp1",
@@ -84,8 +96,14 @@ def main():
             ]
         ]
 
-    X = normalization(df_X.copy()).values
-    y = normalization(df_y.copy()).values
+    X = normalization(
+        df_X.copy(),
+        data_type=data_type,
+    ).values
+    y = normalization(
+        df_y.copy(),
+        data_type=data_type,
+    ).values
     x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
     x_val, x_test, y_val, y_test = train_test_split(x_test, y_test, test_size=0.5)
 
@@ -101,7 +119,7 @@ def main():
     #     y_train,
     #     X_val,
     #     y_val,
-    #     num_trials=10,
+    #     num_trials=20,
     #     num_epochs=500,
     #     data_type=data_type,
     #     delete_previous_study=True,

@@ -44,10 +44,10 @@ def histogram(
     fig, axs = plt.subplots(math.ceil(X_Sampled.shape[1] / 2), 2)
     idx = 0
     for i in range(axs.shape[1]):
-        if X_Sampled.shape[1] - 1 < idx:
-            fig.delaxes(axs[j + 1, i])
-            break
         for j in range(axs.shape[0]):
+            if X_Sampled.shape[1] - 1 < idx:
+                fig.delaxes(axs[j, i])
+                break
             axs[j, i].set_title(f"Sample {df_Sampled_hist.columns[idx]}")
             plot_data = pd.DataFrame(
                 {

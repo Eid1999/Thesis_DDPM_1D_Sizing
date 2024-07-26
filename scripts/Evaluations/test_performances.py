@@ -97,6 +97,11 @@ def test_performaces(
             df_X.copy(),
             data_type=data_type,
         )
+        if data_type == "folded_vcota":
+            df_X_Sampled = pd.concat(
+                (df_X_Sampled, df_y_test["cload"]),
+                axis=1,
+            )
         os.makedirs(path, exist_ok=True)
         df_X_Sampled.to_csv(f"{path}sizing_test{nn_type}.csv")
         df_y_test.to_csv(f"{path}real_test{nn_type}.csv")

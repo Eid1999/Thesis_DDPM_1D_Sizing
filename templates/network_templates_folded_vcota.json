@@ -3,7 +3,7 @@
         "nn_template": {
             "hidden_layers": [
                 433,
-                375,
+                406,
                 280
             ]
         },
@@ -11,36 +11,34 @@
         "learning_rate": 0.00854861132872438,
         "loss_type": "l1",
         "noise_steps": 10,
-        "guidance_weight": 0.2987643891763977
+        "guidance_weight": 0.1644418165999706
     },
     "MLP_skip": {
         "nn_template": {
             "hidden_layers": [
-                422,
-                443,
-                1701,
-                383,
-                543,
-                229,
-                1872,
-                207,
-                964,
-                436,
-                964,
-                207,
-                1872,
-                229,
-                543,
-                383,
-                1701,
-                443,
-                422
+                512,
+                1159,
+                1242,
+                307,
+                406,
+                343,
+                1064,
+                366,
+                439,
+                366,
+                1064,
+                343,
+                406,
+                307,
+                1242,
+                1159,
+                512
             ]
         },
-        "batch_size": 84,
-        "learning_rate": 0.00011151326766559367,
+        "batch_size": 203,
+        "learning_rate": 0.0002707847064465564,
         "loss_type": "l1",
-        "guidance_weight": 0.05218724660144223,
+        "guidance_weight": 0.049909114578851665,
         "noise_steps": 10
     },
     "EoT": {
@@ -68,29 +66,33 @@
         "batch_size": 167,
         "learning_rate": 5.5165667342678884e-05,
         "loss_type": "l1",
-        "noise_steps": 100,
+        "noise_steps": 10,
         "guidance_weight": 0.3247990627896279
     },
     "Simulator": {
         "nn_template": {
             "hidden_layers": [
-                1789,
-                2213,
-                66,
-                51,
-                193,
+                4023,
+                320,
+                138,
+                50,
+                1558,
                 20,
-                41,
-                1234,
-                1164
+                68,
+                1082,
+                4326
             ]
         },
-        "batch_size": 77,
-        "lr": 0.0015679512873372097
+        "batch_size": 123,
+        "lr": 8.134269661984001e-05
     },
     "Normalization": {
         "type_normalization": "minmax",
         "log_norm": [
+            "gbw", 
+            "pm", 
+            "idd",
+            "gdc",
             "_wpmbiasp",
             "_wp5",
             "_wp4",
@@ -102,6 +104,18 @@
             "_wn6",
             "_wn4",
             "_wn0",
+            "_nfpmbiasp",
+            "_nfp5",
+            "_nfp4",
+            "_nfp1",
+            "_nfp0",
+            "_nfnmbiasp",
+            "_nfnmbiasn",
+            "_nfn8",
+            "_nfn6",
+            "_nfn4",
+            "_nfn0",
+            "_lpmbiasp",
             "_lp5",
             "_lp4",
             "_lp1",
@@ -111,11 +125,7 @@
             "_ln8",
             "_ln6",
             "_ln4",
-            "_ln0",
-            "gdc",
-            "gbw",
-            "pm",
-            "idd"
+            "_ln0"
         ]
     }
 }

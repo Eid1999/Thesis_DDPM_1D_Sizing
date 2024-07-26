@@ -31,13 +31,6 @@ from Networks import MLP, MLP_skip, EoT
 nn_type = "MLP"  ## define NN type
 
 
-def extract_error(file_name):
-    match = re.search(r"-PError(\d+)", file_name)
-    if match:
-        return int(match.group(1))  # Convert the extracted error to an integer
-    return float("inf")  # Return infinity if no match is found
-
-
 def main():
     torch.manual_seed(0)
     torch.cuda.manual_seed(0)
@@ -50,10 +43,10 @@ def main():
     }
     network = nn_map[nn_type]
     torch.cuda.empty_cache()
-    ############################### VCOTA DATASET #############################
+    ############################### DATASET #############################
     if data_type == "vcota":
 
-        dataframe = pd.read_csv("./data/vcota.csv")
+        dataframe = pd.read_csv("./data/vcota.csv", sep="\s+")  # type: ignore # ignore
         df_X = dataframe[
             [
                 "w8",
@@ -98,6 +91,7 @@ def main():
                 )[None],
                 columns=df_X.columns,
             ),
+            data_type=data_type,
             df_original=df_X,
         ).values
         norm_max = normalization(
@@ -120,6 +114,7 @@ def main():
                 )[None],
                 columns=df_X.columns,
             ),
+            data_type=data_type,
             df_original=df_X,
         ).values
     if data_type == "folded_vcota":
@@ -137,6 +132,18 @@ def main():
                 "_wn6",
                 "_wn4",
                 "_wn0",
+                "_nfpmbiasp",
+                "_nfp5",
+                "_nfp4",
+                "_nfp1",
+                "_nfp0",
+                "_nfnmbiasp",
+                "_nfnmbiasn",
+                "_nfn8",
+                "_nfn6",
+                "_nfn4",
+                "_nfn0",
+                "_lpmbiasp",
                 "_lp5",
                 "_lp4",
                 "_lp1",
@@ -158,23 +165,40 @@ def main():
                 "cload",
             ]
         ]
-        norm_min = np.array([-1] * df_X.shape[-1])
-        norm_max = np.array([1] * df_X.shape[-1])
 
-    # plot_dataset(df_y)
+    plot_dataset(df_y)
 
-    X = normalization(df_X.copy()).values
-    y = normalization(df_y.copy()).values
+    X = normalization(
+        df_X.copy(),
+        data_type=data_type,
+    ).values
+    y = normalization(
+        df_y.copy(),
+        data_type=data_type,
+    ).values
+    if data_type == "folded_vcota":
+        norm_min = X.min()
+        norm_max = X.max()
 
-    X_train, X_test, y_train, y_test = train_test_split(
+    if False:
+        value = np.unique(y[:, -1])[0]
+        idx = np.any(np.isin(y, value), axis=1)
+        mask = np.ones(X.shape[0], dtype=bool)
+        idxa = np.where(idx)[0]
+        mask[idxa] = False
+        y_test = y[idxa]
+        X_test = X[idxa]
+        y = y[mask]
+        X = X[mask]
+    X_train, X_val, y_train, y_val = train_test_split(
         X,
         y,
         test_size=0.2,
         random_state=0,
     )
     X_val, X_test, y_val, y_test = train_test_split(
-        X_test,
-        y_test,
+        X_val,
+        y_val,
         test_size=0.5,
         random_state=0,
     )
@@ -227,7 +251,7 @@ def main():
     #     nn_type,
     #     X_val=X_val,
     #     y_val=y_val,
-    #     epochs=10000,
+    #     epochs=5000,
     #     early_stop=False,
     #     **hyper_parameters,
     #     frequency_print=50,
@@ -240,12 +264,22 @@ def main():
         y_dim=y.shape[-1],
         **hyper_parameters["nn_template"],
     ).cuda()
-    files = glob.glob(f"./weights/{data_type}/{nn_type}/noise{DDPM.noise_steps}/*.pth")
-    path_DDPM = min(files, key=extract_error)
+    pattern = re.compile(r"EPOCH\d+-PError: (\d+\.\d+)\.pth")
+    smallest_error = float("inf")
+    for filename in os.listdir(
+        f"./weights/{data_type}/{nn_type}/noise{DDPM.noise_steps}"
+    ):
+        match = pattern.match(filename)
+        if match:
+            perror = float(match.group(1))
+            if perror < smallest_error:
+                smallest_error = perror
+                path_DDPM = filename
+    path_DDPM = f"./weights/{data_type}/{nn_type}/noise{DDPM.noise_steps}/{path_DDPM}"
     DDPM.model.load_state_dict(torch.load(path_DDPM))
     hyper_parameters = GUIDANCE_WEIGHT_OPT(
         DDPM,
-        y_val,
+        y_test,
         df_X,
         df_y,
         nn_type,
@@ -291,18 +325,20 @@ def main():
         display=True,
         save=True,
         nn_type=nn_type,
-        data_type=data_type,
+        data_type=data_type,  # ignore
     )
-    # inference_error(
-    #     nn_type,
-    #     DDPM,
-    #     hyper_parameters["guidance_weight"],
-    #     df_X,
-    #     df_y,
-    #     display=True,
-    #     save=True,
-    #     data_type=data_type,
-    # )
+    if data_type == "vcota":
+        inference_error(
+            nn_type,
+            DDPM,
+            hyper_parameters["guidance_weight"],
+            df_X,
+            df_y,
+            display=True,
+            save=True,
+            data_type=data_type,
+        )
+    print(path_DDPM)
 
 
 if __name__ == "__main__":

@@ -2,16 +2,17 @@
     "MLP": {
         "nn_template": {
             "hidden_layers": [
-                1349,
-                202,
-                952
+                753,
+                1700,
+                416,
+                929
             ]
         },
-        "batch_size": 132,
-        "learning_rate": 0.0016053955926854306,
+        "batch_size": 100,
+        "learning_rate": 0.0014092291316435573,
         "loss_type": "l1",
         "noise_steps": 10,
-        "guidance_weight": 0.1147082182470561
+        "guidance_weight": 0.10439734581966026
     },
     "MLP_skip": {
         "nn_template": {
@@ -42,7 +43,7 @@
         "batch_size": 206,
         "learning_rate": 0.0005284157412383816,
         "loss_type": "l1",
-        "guidance_weight": 0.059419967015642616,
+        "guidance_weight": 0.044435056908482595,
         "noise_steps": 10
     },
     "EoT": {

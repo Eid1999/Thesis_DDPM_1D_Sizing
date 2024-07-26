@@ -21,7 +21,7 @@ def see_noise_data(
     norm_original_matrix = reverse_normalization(
         original_matrix,
         df_X.copy(),
-        data_type="vcota",
+        data_type=data_type,
     )
     error = np.abs(
         np.divide(

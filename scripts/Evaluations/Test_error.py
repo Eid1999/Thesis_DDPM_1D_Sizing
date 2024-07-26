@@ -14,6 +14,7 @@ def Test_error(
     X_test: np.ndarray,
     df_X: pd.DataFrame,
     data_type: str = "vcota",
+    display: str = "False",
 ) -> None:
     print("\n\n\nTest Error")
     X_Sampled = DDPM.sampling(
@@ -49,24 +50,47 @@ def Test_error(
         axis=0,
     )
     print(f"\n{error}")
-    plt.subplot(1, 2, 1)
-    sns.heatmap(
-        normalization(df_Sampled, df_original=df_X.copy(), type_normalization="minmax"),
-        cmap="Spectral",
-        xticklabels=True,
-        vmin=1,
-        vmax=-1,
-    )
-    # plt.colorbar()
-    plt.title("VCOTA Sample Dataset")
+    if display:
+        fig, axs = plt.subplots(math.ceil(X_Sampled.shape[1] / 2), 2)
+        idx = 0
+        for i in range(axs.shape[1]):
+            for j in range(axs.shape[0]):
+                if X_Sampled.shape[1] - 1 < idx:
+                    fig.delaxes(axs[j, i])
+                    break
+                axs[j, i].set_title(f"Sample {df_Sampled.columns[idx]}")
+                plot_data = pd.DataFrame(
+                    {
+                        "Sampled Data": df_Sampled.iloc[:, idx],
+                        "Real data": df_X_test.iloc[:, idx],
+                    }
+                )
+                sns.histplot(
+                    plot_data,
+                    ax=axs[j, i],
+                    log_scale=True,
+                    bins=100,
+                    kde=True,  # If you want to add a KDE line
+                    legend=(
+                        True
+                        if j == axs.shape[0] // 2 - 1 and i == axs.shape[1] - 1
+                        else False
+                    ),
+                )
 
-    plt.subplot(1, 2, 2)
-    sns.heatmap(
-        normalization(df_X_test, df_original=df_X.copy(), type_normalization="minmax"),
-        cmap="Spectral",
-        xticklabels=True,
-        vmin=1,
-        vmax=-1,
-    )
-    plt.title("VCOTA test Dataset")
-    plt.show()
+                idx += 1
+
+                # if j == 0:
+                #     for ind, label in enumerate(axs[j, i].get_xticklabels()):
+                #         label.set_visible(False)
+
+        sns.move_legend(
+            axs[axs.shape[0] // 2 - 1, axs.shape[1] - 1],
+            loc="center left",
+            bbox_to_anchor=[1, 0.5],
+            fancybox=True,
+            shadow=True,
+            fontsize="10",
+        )
+
+        plt.show()

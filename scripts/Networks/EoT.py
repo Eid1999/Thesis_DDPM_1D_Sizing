@@ -9,7 +9,7 @@ from Networks import MLP_skip, MLP
 from Networks.Modulations import FiLM, Addition, Multiplication
 
 
-class EoT(MLP):
+class EoT(MLP_skip):
 
     def __init__(
         self,
