@@ -16,7 +16,7 @@ def plot_dataset(df_y):
                 data=df_y,
                 x=labels[idx],
                 ax=ax[i, j],
-                log_scale=True if labels[idx] not in ("cload", "gdc", "idd") else False,
+                log_scale=True,  # if labels[idx] not in ("cload", "gdc", "idd") else False,
                 bins=100,
                 kde=True,
             )

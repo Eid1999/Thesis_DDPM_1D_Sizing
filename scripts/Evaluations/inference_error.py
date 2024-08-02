@@ -36,6 +36,7 @@ def inference_error(
         y_target,
         df_original=df_y,
         data_type=data_type,
+        poly_bool=True,
     ).values
     y_target_norm = torch.tensor(
         y_target_norm,
@@ -43,7 +44,7 @@ def inference_error(
         device=DDPM.device,
     )
     X_Sampled = DDPM.sampling(
-        DDPM.model.cuda(),
+        DDPM.model,
         y_target_norm.shape[0],
         y_target_norm,
         weight=best_weight,
@@ -55,8 +56,11 @@ def inference_error(
         df_y.shape[-1] - 1 if data_type == "folded_vcota" else df_y.shape[-1],
         **hyper_parameters["nn_template"],
     ).to("cuda")
-    simulator.load_state_dict(torch.load(f"./weights/{data_type}/Simulator.pth"))
+    simulator.load_state_dict(
+        torch.load(f"./weights/{data_type}/Simulator.pth", weights_only=True)
+    )
 
+    y_target_norm = y_target_norm[:, : df_y.shape[-1]]
     y_Sampled = simulator(
         (
             torch.cat((X_Sampled, y_target_norm[:, -1][:, None]), dim=-1)
@@ -113,6 +117,7 @@ def inference_error(
             print(f"Error:\n{error}")
     if save:
         path = f"points_to_simulate/{data_type}/target/"
+        os.makedirs(path, exist_ok=True)
         X_Sampled.to_csv(f"{path}sizing_target{nn_type}.csv")
         y_target.to_csv(f"{path}real_target{nn_type}.csv")
         y_Sampled.to_csv(f"{path}nn_target{nn_type}.csv")

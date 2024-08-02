@@ -17,7 +17,7 @@ def histogram(
     data_type: str = "vcota",
 ) -> None:
     X_Sampled = DDPM.sampling(
-        DDPM.model.cuda(),
+        DDPM.model,
         y.shape[0],
         y,
         weight=best_weight,

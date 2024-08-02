@@ -5,6 +5,7 @@ def reverse_normalization(
     df: pd.DataFrame,
     df_original: pd.DataFrame,
     data_type: str = "vcota",
+    poly: bool = False,
 ) -> pd.DataFrame:
 
     def reverse_standardize() -> pd.DataFrame:

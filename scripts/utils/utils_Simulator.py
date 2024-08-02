@@ -12,13 +12,13 @@ def Eval_loop(
     with torch.no_grad():
         y_pred = model(X)
         loss = loss_fn(y_pred, y)
-    return loss.cpu().numpy()
+    return loss.cpu().numpy()  # type: ignore
 
 
 def Train_loop(
     data_loader_train: DataLoader,
     model: nn.Module,
-    optimizer: optim.Adam,
+    optimizer: optim.Adam,  # type: ignore
     loss_fn: Callable[[torch.Tensor, torch.Tensor], torch.Tensor],
 ) -> None:
     model.train()
@@ -41,16 +41,22 @@ def epoch_loop(
     n_epoch: int = 100,
     trial: Optional[Trial] = None,
 ) -> tuple[nn.Module, float]:
+    torch.set_float32_matmul_precision("medium")
     last_val_loss = float("inf")
     model = Simulator(
         X_train.shape[-1],
         y_train.shape[-1],
         **nn_template,
     ).to("cuda")
-    optimizer = optim.Adam(
+    model_comp = torch.compile(
+        model,
+        options={"triton.cudagraphs": True},
+        # mode="reduce-overhead",
+    )
+    optimizer = optim.Adam(  # type: ignore
         model.parameters(),
         lr=lr,
-        weight_decay=1e-7,
+        weight_decay=1e-6,
     )
     patience = 0
     dataloader = DataLoader(
@@ -58,18 +64,18 @@ def epoch_loop(
     )
     loss_fn = nn.L1Loss(reduction="mean")
     scheduler = lr_scheduler.ExponentialLR(optimizer, gamma=0.99)
-    val_loss = Eval_loop(X_val, y_val, model, loss_fn)
+    val_loss = Eval_loop(X_val, y_val, model_comp, loss_fn)  # type: ignore
     pbar = tqdm(range(n_epoch))
     for epoch in pbar:
         pbar.set_description(f"Validarion Loss: {val_loss}")
-        Train_loop(dataloader, model, optimizer, loss_fn)
+        Train_loop(dataloader, model_comp, optimizer, loss_fn)  # type: ignore
         scheduler.step()
         if trial is not None:
             trial.report(val_loss, step=epoch + 1)
             # if trial.should_prune():
             #     raise optuna.exceptions.TrialPruned()
 
-        val_loss = Eval_loop(X_val, y_val, model, loss_fn)
+        val_loss = Eval_loop(X_val, y_val, model_comp, loss_fn)  # type: ignore
         if val_loss < last_val_loss:
             last_val_loss = val_loss
             patience = 0

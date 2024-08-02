@@ -13,7 +13,7 @@ def main():
     sim = {}
     real = {}
     NN = {}
-    NN_type = ["MLP"]
+    NN_type = ["MLP_skip", "EoT"]
     types = ["test"] if data_type == "folded_vcota" else ["test", "target"]
     for type in types:
         sim[type] = {}
@@ -22,7 +22,7 @@ def main():
         for nn in NN_type:
             sim[type][nn] = pd.read_csv(
                 f"./points_to_simulate/{data_type}/{type}/sizing_{type}{nn}_Performances.csv",
-                sep="\s+",
+                sep="\s+",  # type: ignore
             )[["gdc", "idd", "gbw", "pm"]]
 
             real[type][nn] = pd.read_csv(

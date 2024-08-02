@@ -17,6 +17,14 @@ class DiffusionDPM:
         X_norm_max: np.ndarray = np.array([1] * 12),
         X_norm_min: np.ndarray = np.array([-1] * 12),
     ) -> None:
+        torch.set_float32_matmul_precision("medium")
+        self.fabric = Fabric(
+            accelerator="cuda",
+            devices="auto",
+            strategy="auto",
+            precision="bf16-mixed",
+        )
+        self.fabric.launch()
         seed_value = 0
         torch.manual_seed(seed_value)
         torch.cuda.manual_seed(seed_value)
@@ -24,7 +32,7 @@ class DiffusionDPM:
         torch.manual_seed(seed_value)
         self.noise_steps = noise_steps
         self.vect_size = vect_size
-        self.device = device
+        self.device = self.fabric.device
         self.X_norm_max = torch.tensor(
             X_norm_max,
             device=self.device,
@@ -180,7 +188,12 @@ class DiffusionDPM:
             y_dim=y.shape[-1] if y is not None else None,
             **nn_template,
         ).to(self.device)
-        optimizer = optim.Adam(
+        self.model_comp = torch.compile(
+            self.model,
+            options={"triton.cudagraphs": True},
+            # mode="simple",
+        )
+        optimizer = optim.Adam(  # type: ignore
             self.model.parameters(),
             lr=learning_rate,
             # weight_decay=1e-6,
@@ -211,9 +224,10 @@ class DiffusionDPM:
         val_loss = []
         best_val_loss = float("inf")
         counter = 0
-        self.model.eval()
+        self.model_comp.eval()
         pbar = tqdm(range(epochs))
-
+        self.model_comp, optimizer = self.fabric.setup(self.model_comp, optimizer)  # type: ignore
+        dataloader = self.fabric.setup_dataloaders(dataloader)
         for epoch in pbar:
             batch_loss_training = []
 
@@ -223,10 +237,10 @@ class DiffusionDPM:
                 vector, noise = self.forward_process(vector, t)
                 if np.random.random() < 0.1:
                     y = None
-                predicted_noise = self.model(vector, t, y)
+                predicted_noise = self.model_comp(vector, t, y)
                 loss = Loss_Function(predicted_noise, noise)
                 optimizer.zero_grad()
-                loss.backward()
+                self.fabric.backward(loss)
                 if visualise_grad and epoch % frequency_print == 0:
                     plot_grad_flow(self.model.named_parameters())
                 optimizer.step()
@@ -260,7 +274,7 @@ class DiffusionDPM:
                 pbar.set_description(
                     f"Performance Error: {np.mean(error):.4f}, Train Loss:{np.array(batch_loss_training[-1]):.4f}"
                 )
-                self.model.train()
+                self.model_comp.train()
             training_loss.append(np.mean(batch_loss_training))
             if trial is None and (
                 (epoch) % frequency_print == 0 or epoch == epochs - 1
@@ -269,6 +283,7 @@ class DiffusionDPM:
                     self.model.state_dict(),
                     f"./weights/{data_type}/{type}/noise{self.noise_steps}/EPOCH{epoch+1}-PError: {np.mean(error):.4f}.pth",
                 )
+        del self.model_comp
         del self.model
         if y_val is not None:
             return error.mean()

@@ -3,15 +3,29 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter
 import matplotlib.ticker as mtick
-from matplotlib.ticker import LogLocator
+from matplotlib.ticker import LogLocator, FuncFormatter
+
+
+def log_percent_formatter(x, pos):
+    return "{:.0%}".format(x)
+
 
 data_type = "vcota"
 df_MLP_skip = pd.read_csv(f"scripts/graph_code/{data_type}/weights_data_MLP_skip.csv")
 df_MLP = pd.read_csv(f"scripts/graph_code/{data_type}/weights_data_MLP.csv")
-df_MLP_skip["Neural Networks"] = "MLP_skip"
+df_EoT = pd.read_csv(f"scripts/graph_code/{data_type}/weights_data_EoT.csv")
+df_MLP_skip["Neural Networks"] = "ResMLP"
 df_MLP["Neural Networks"] = "MLP"
+df_EoT["Neural Networks"] = "EoT"
 fig, ax = plt.subplots()
-data = pd.concat([df_MLP_skip, df_MLP], ignore_index=True)
+data = pd.concat(
+    [
+        df_MLP_skip,
+        df_MLP,
+        df_EoT,
+    ],
+    ignore_index=True,
+)
 sns.lineplot(
     data=data,
     x="Weights",
@@ -25,8 +39,18 @@ plt.ylabel("Mean Performance Error[%]", fontsize=14)
 plt.title("Epochs=1000, Time step=10", fontsize=14)
 plt.xscale("log")
 ax.xaxis.set_major_formatter(ScalarFormatter())
+
 plt.yscale("log")
-plt.gca().yaxis.set_major_locator(LogLocator(base=10.0, numticks=5, subs=(0.5, 2)))
-ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1.0))
+# ax.yaxis.set_major_formatter(FuncFormatter(log_percent_formatter))
+ax.yaxis.set_major_locator(LogLocator(base=10.0, numticks=10, subs="auto"))  #
+ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1))
+sns.move_legend(
+    ax,
+    loc="center left",
+    bbox_to_anchor=[1, 0.5],
+    fancybox=True,
+    shadow=True,
+    fontsize="10",
+)
 
 plt.show()

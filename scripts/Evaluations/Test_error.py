@@ -14,7 +14,7 @@ def Test_error(
     X_test: np.ndarray,
     df_X: pd.DataFrame,
     data_type: str = "vcota",
-    display: str = "False",
+    display: bool = False,
 ) -> None:
     print("\n\n\nTest Error")
     X_Sampled = DDPM.sampling(

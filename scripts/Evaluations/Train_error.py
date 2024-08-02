@@ -21,7 +21,10 @@ def Train_error(
 
     # start_time = time.time()
     X_Sampled = DDPM.sampling(
-        DDPM.model.cuda(), y_train.shape[0], y_train, weight=best_weight
+        DDPM.model,
+        y_train.shape[0],
+        y_train,
+        weight=best_weight,
     )
     # y_train=pd.DataFrame(y_train.cpu().numpy(),columns=df_y.columns)
     # y_train.to_csv('y_train.csv')

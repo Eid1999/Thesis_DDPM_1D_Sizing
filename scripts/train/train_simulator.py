@@ -99,13 +99,25 @@ def main():
     X = normalization(
         df_X.copy(),
         data_type=data_type,
+        # poly_bool=True,
     ).values
     y = normalization(
         df_y.copy(),
         data_type=data_type,
+        # poly_bool=True,
     ).values
-    x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
-    x_val, x_test, y_val, y_test = train_test_split(x_test, y_test, test_size=0.5)
+    x_train, x_test, y_train, y_test = train_test_split(
+        X,
+        y,
+        test_size=0.2,
+        random_state=0,
+    )
+    x_val, x_test, y_val, y_test = train_test_split(
+        x_test,
+        y_test,
+        test_size=0.5,
+        random_state=0,
+    )
 
     X_train = torch.tensor(x_train, dtype=torch.float32, device=device)
     y_train = torch.tensor(y_train, dtype=torch.float32, device=device)
@@ -119,7 +131,7 @@ def main():
     #     y_train,
     #     X_val,
     #     y_val,
-    #     num_trials=20,
+    #     num_trials=50,
     #     num_epochs=500,
     #     data_type=data_type,
     #     delete_previous_study=True,
@@ -133,7 +145,7 @@ def main():
         X_val,
         y_val,
         **hyper_parameters["Simulator"],
-        n_epoch=500,
+        n_epoch=2000,
     )
     Test_error(
         X_test,

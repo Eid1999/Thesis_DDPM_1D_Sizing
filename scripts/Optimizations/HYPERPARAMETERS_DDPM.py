@@ -36,7 +36,7 @@ def HYPERPARAMETERS_DDPM(
     data_type: str = "vcota",
 ):
     def objective(trial):
-        real_layers = trial.suggest_int("num_layers", 3, 20)
+        real_layers = trial.suggest_int("num_layers", 3, 30)
 
         num_layers = real_layers if nn_type in ("MLP") else math.ceil(real_layers / 2)
 

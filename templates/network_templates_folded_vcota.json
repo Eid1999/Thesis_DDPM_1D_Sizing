@@ -2,97 +2,101 @@
     "MLP": {
         "nn_template": {
             "hidden_layers": [
-                433,
-                406,
-                280
+                1300,
+                469,
+                200
             ]
         },
-        "batch_size": 140,
-        "learning_rate": 0.00854861132872438,
+        "batch_size": 80,
+        "learning_rate": 0.0010778609216437387,
         "loss_type": "l1",
         "noise_steps": 10,
-        "guidance_weight": 0.1644418165999706
+        "guidance_weight": 0.09290074027868052
     },
     "MLP_skip": {
         "nn_template": {
             "hidden_layers": [
-                512,
-                1159,
-                1242,
-                307,
-                406,
-                343,
+                358,
                 1064,
-                366,
-                439,
-                366,
+                1023,
+                361,
+                1340,
+                455,
+                372,
+                1963,
+                947,
+                420,
+                582,
+                420,
+                947,
+                1963,
+                372,
+                455,
+                1340,
+                361,
+                1023,
                 1064,
-                343,
-                406,
-                307,
-                1242,
-                1159,
-                512
+                358
             ]
         },
-        "batch_size": 203,
-        "learning_rate": 0.0002707847064465564,
+        "batch_size": 179,
+        "learning_rate": 0.00021956135985513872,
         "loss_type": "l1",
-        "guidance_weight": 0.049909114578851665,
+        "guidance_weight": 0.026593627814678097,
         "noise_steps": 10
     },
     "EoT": {
         "nn_template": {
             "hidden_layers": [
-                773,
-                1056,
-                340,
-                846,
-                208
+                1160,
+                309,
+                554,
+                1361,
+                647,
+                647,
+                1361,
+                554,
+                309,
+                1160
             ],
             "num_heads": [
-                6,
+                4,
                 2,
+                13,
+                9,
+                8,
+                14,
                 3,
+                26,
                 2,
-                2,
-                2,
-                1,
-                12,
-                1,
-                3
+                30,
+                28
             ]
         },
-        "batch_size": 167,
-        "learning_rate": 5.5165667342678884e-05,
+        "batch_size": 132,
+        "learning_rate": 0.0007695081353136853,
         "loss_type": "l1",
         "noise_steps": 10,
-        "guidance_weight": 0.3247990627896279
+        "guidance_weight": 0.017781083851155594
     },
     "Simulator": {
         "nn_template": {
             "hidden_layers": [
-                4023,
-                320,
-                138,
-                50,
-                1558,
-                20,
-                68,
-                1082,
-                4326
+                862,
+                1525,
+                3163,
+                58,
+                140,
+                678,
+                20
             ]
         },
-        "batch_size": 123,
-        "lr": 8.134269661984001e-05
+        "batch_size": 103,
+        "lr": 0.0005791078685328565
     },
     "Normalization": {
         "type_normalization": "minmax",
         "log_norm": [
-            "gbw", 
-            "pm", 
-            "idd",
-            "gdc",
             "_wpmbiasp",
             "_wp5",
             "_wp4",

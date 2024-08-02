@@ -33,8 +33,11 @@ def test_performaces(
         df_y.shape[-1] - 1 if data_type == "folded_vcota" else df_y.shape[-1],
         **hyper_parameters["nn_template"],
     ).to("cuda")
-    simulator.load_state_dict(torch.load(f"./weights/{data_type}/Simulator.pth"))
+    simulator.load_state_dict(
+        torch.load(f"./weights/{data_type}/Simulator.pth", weights_only=True)
+    )
 
+    y_test = y_test[:, : df_y.shape[-1]]  # Reverse Polynomial
     y_Sampled = simulator(
         (
             torch.cat(

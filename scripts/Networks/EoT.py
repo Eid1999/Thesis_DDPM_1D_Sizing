@@ -42,26 +42,27 @@ class EoT(MLP_skip):
         #         for i in range(len(hidden_layers) + 1)
         #     ]
         # )
+        head_dim = 37
         self.hidden_layers = nn.ModuleList(
             [
                 nn.Sequential(
                     MultiHeadAttention(
                         input_size if i == 0 else hidden_layers[i - 1],
                         num_heads=num_heads[i],
+                        head_dim=head_dim,
                     ),
-                    nn.LayerNorm(input_size if i == 0 else hidden_layers[i - 1]),
                     nn.Linear(
                         in_features=input_size if i == 0 else hidden_layers[i - 1],
                         out_features=(
                             hidden_layers[i] if i < len(hidden_layers) else output_size
                         ),
                     ),
-                    nn.PReLU() if i < len(hidden_layers) else nn.Identity(),
                     (
                         nn.LayerNorm(hidden_layers[i])
                         if i < len(hidden_layers)
                         else nn.Identity()
                     ),
+                    nn.PReLU() if i < len(hidden_layers) else nn.Identity(),
                 )
                 for i in range(len(hidden_layers) + 1)
             ]

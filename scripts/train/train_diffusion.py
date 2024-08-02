@@ -10,6 +10,8 @@ from Dataset import (
     reverse_normalization,
 )
 
+os.environ[" SEGMENT_ANYTHING_FAST_USE_FLASH_4"] = "0"
+
 
 from Evaluations import (
     Test_error,
@@ -28,7 +30,7 @@ from Diffusion import DiffusionDPM
 guidance = True
 from Networks import MLP, MLP_skip, EoT
 
-nn_type = "MLP"  ## define NN type
+nn_type = "MLP_skip"  ## define NN type
 
 
 def main():
@@ -166,7 +168,7 @@ def main():
             ]
         ]
 
-    plot_dataset(df_y)
+    # plot_dataset(df_y)
 
     X = normalization(
         df_X.copy(),
@@ -175,6 +177,7 @@ def main():
     y = normalization(
         df_y.copy(),
         data_type=data_type,
+        poly_bool=True,
     ).values
     if data_type == "folded_vcota":
         norm_min = X.min()
@@ -212,6 +215,7 @@ def main():
         X_norm_min=norm_min,
         noise_steps=hyper_parameters["noise_steps"],
     )
+    print(f"Training {nn_type} with the {data_type}")
 
     X = torch.tensor(X, dtype=torch.float32, device=DDPM.device)
     y = torch.tensor(y, dtype=torch.float32, device=DDPM.device)
@@ -233,37 +237,37 @@ def main():
     #     nn_type,
     #     hyper_parameters["noise_steps"],
     #     epoch=1000,
-    #     n_trials=20,
+    #     n_trials=10,
     #     X_min=norm_min,
     #     X_max=norm_max,
-    #     frequency_print=50,
-    #     delete_previous_study=True,
-    #     guidance_weight=hyper_parameters["guidance_weight"],
+    #     frequency_print=100,
+    #     delete_previous_study=False,
+    #     #     guidance_weight=hyper_parameters["guidance_weight"],
     #     data_type=data_type,
     # )
-
-    # DDPM.reverse_process(
-    #     X_train,
-    #     y_train,
-    #     network,
-    #     df_X,
-    #     df_y,
-    #     nn_type,
-    #     X_val=X_val,
-    #     y_val=y_val,
-    #     epochs=5000,
-    #     early_stop=False,
-    #     **hyper_parameters,
-    #     frequency_print=50,
-    #     data_type=data_type,
-    # )
+    DDPM.reverse_process(
+        X_train,
+        y_train,
+        network,
+        df_X,
+        df_y,
+        nn_type,
+        X_val=X_val,
+        y_val=y_val,
+        epochs=10000,
+        early_stop=False,
+        **hyper_parameters,
+        frequency_print=50,
+        data_type=data_type,
+        # guidance_weight=hyper_parameters["guidance_weight"],
+    )
 
     DDPM.model = network(
         input_size=X.shape[1],
         output_size=X.shape[1],
         y_dim=y.shape[-1],
         **hyper_parameters["nn_template"],
-    ).cuda()
+    ).to(DDPM.device)
     pattern = re.compile(r"EPOCH\d+-PError: (\d+\.\d+)\.pth")
     smallest_error = float("inf")
     for filename in os.listdir(
@@ -276,10 +280,10 @@ def main():
                 smallest_error = perror
                 path_DDPM = filename
     path_DDPM = f"./weights/{data_type}/{nn_type}/noise{DDPM.noise_steps}/{path_DDPM}"
-    DDPM.model.load_state_dict(torch.load(path_DDPM))
+    DDPM.model.load_state_dict(torch.load(path_DDPM, weights_only=True))
     hyper_parameters = GUIDANCE_WEIGHT_OPT(
         DDPM,
-        y_test,
+        y_val,
         df_X,
         df_y,
         nn_type,
@@ -314,6 +318,7 @@ def main():
         X_test,
         df_X,
         data_type=data_type,
+        display=False,
     )
 
     test_performaces(
