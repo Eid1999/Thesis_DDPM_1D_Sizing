@@ -34,4 +34,4 @@ import pdb
 from torch.utils.data import Dataset
 from lightning import Fabric
 
-data_type = "folded_vcota"
+data_type = "vcota"

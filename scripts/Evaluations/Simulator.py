@@ -12,6 +12,8 @@ def Test_error(
     model: nn.Module,
     df_y_original: pd.DataFrame,
     data_type: str = "vcota",
+    save: bool = False,
+    df_X: Union[pd.DataFrame, None] = None,
 ):
     model.eval()
     y = model(X_test)
@@ -44,3 +46,21 @@ def Test_error(
         axis=0,
     )  # type: ignore
     print(f"\n{error} \n Mean Error:{error.mean()}")
+    if save and df_X is not None:
+        path = f"points_to_simulate/{data_type}/test/"
+        df_X_test = reverse_normalization(
+            pd.DataFrame(
+                X_test[:, : df_X.shape[1]].detach().cpu().numpy(),
+                columns=df_X.columns,
+            ),
+            df_X.copy(),
+            data_type=data_type,
+        )
+        if data_type == "folded_vcota":
+            df_X_test = pd.concat(
+                (df_X_test, df_y_test["cload"]),
+                axis=1,
+            )
+        os.makedirs(path, exist_ok=True)
+        df_y_test.to_csv(f"{path}sizing_testSupervised.csv")
+        df_X_test.to_csv(f"{path}real_testSupervised.csv")

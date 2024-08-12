@@ -125,17 +125,17 @@ def main():
     y_val = torch.tensor(y_val, dtype=torch.float32, device=device)
     X_test = torch.tensor(x_test, dtype=torch.float32, device=device)
     y_test = torch.tensor(y_test, dtype=torch.float32, device=device)
-
-    # HYPERPARAMETERS_SIMULATOR(
-    #     X_train,
-    #     y_train,
-    #     X_val,
-    #     y_val,
-    #     num_trials=50,
-    #     num_epochs=500,
-    #     data_type=data_type,
-    #     delete_previous_study=True,
-    # )
+    print(data_type)
+    HYPERPARAMETERS_SIMULATOR(
+        X_train,
+        y_train,
+        X_val,
+        y_val,
+        num_trials=50,
+        num_epochs=500,
+        data_type=data_type,
+        delete_previous_study=True,
+    )
 
     with open(f"./templates/network_templates_{data_type}.json", "r") as file:
         hyper_parameters = json.load(file)

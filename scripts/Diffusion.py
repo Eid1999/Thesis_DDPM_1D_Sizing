@@ -29,7 +29,6 @@ class DiffusionDPM:
         torch.manual_seed(seed_value)
         torch.cuda.manual_seed(seed_value)
         np.random.seed(seed_value)
-        torch.manual_seed(seed_value)
         self.noise_steps = noise_steps
         self.vect_size = vect_size
         self.device = self.fabric.device
@@ -272,7 +271,7 @@ class DiffusionDPM:
                         # if trial.should_prune():
                         # raise optuna.exceptions.TrialPruned()
                 pbar.set_description(
-                    f"Performance Error: {np.mean(error):.4f}, Train Loss:{np.array(batch_loss_training[-1]):.4f}"
+                    f"Performance Error: {np.max(error):.4f}, Train Loss:{np.array(batch_loss_training[-1]):.4f}"
                 )
                 self.model_comp.train()
             training_loss.append(np.mean(batch_loss_training))
@@ -281,7 +280,7 @@ class DiffusionDPM:
             ):
                 torch.save(
                     self.model.state_dict(),
-                    f"./weights/{data_type}/{type}/noise{self.noise_steps}/EPOCH{epoch+1}-PError: {np.mean(error):.4f}.pth",
+                    f"./weights/{data_type}/{type}/noise{self.noise_steps}/EPOCH{epoch+1}-PError: {np.max(error):.4f}.pth",
                 )
         del self.model_comp
         del self.model

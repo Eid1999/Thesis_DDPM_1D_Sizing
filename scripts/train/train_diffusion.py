@@ -21,6 +21,7 @@ from Evaluations import (
     histogram,
     see_noise_data,
     plot_dataset,
+    plot_targets,
 )
 import seaborn as sns
 from Optimizations import HYPERPARAMETERS_DDPM, GUIDANCE_WEIGHT_OPT
@@ -30,7 +31,7 @@ from Diffusion import DiffusionDPM
 guidance = True
 from Networks import MLP, MLP_skip, EoT
 
-nn_type = "MLP_skip"  ## define NN type
+nn_type = "EoT"  ## define NN type
 
 
 def main():
@@ -169,7 +170,7 @@ def main():
         ]
 
     # plot_dataset(df_y)
-
+    plot_targets(df_y)
     X = normalization(
         df_X.copy(),
         data_type=data_type,
@@ -237,30 +238,30 @@ def main():
     #     nn_type,
     #     hyper_parameters["noise_steps"],
     #     epoch=1000,
-    #     n_trials=10,
+    #     n_trials=20,
     #     X_min=norm_min,
     #     X_max=norm_max,
     #     frequency_print=100,
-    #     delete_previous_study=False,
+    #     delete_previous_study=True,
     #     #     guidance_weight=hyper_parameters["guidance_weight"],
     #     data_type=data_type,
     # )
-    DDPM.reverse_process(
-        X_train,
-        y_train,
-        network,
-        df_X,
-        df_y,
-        nn_type,
-        X_val=X_val,
-        y_val=y_val,
-        epochs=10000,
-        early_stop=False,
-        **hyper_parameters,
-        frequency_print=50,
-        data_type=data_type,
-        # guidance_weight=hyper_parameters["guidance_weight"],
-    )
+    # DDPM.reverse_process(
+    #     X_train,
+    #     y_train,
+    #     network,
+    #     df_X,
+    #     df_y,
+    #     nn_type,
+    #     X_val=X_val,
+    #     y_val=y_val,
+    #     epochs=10000,
+    #     early_stop=False,
+    #     **hyper_parameters,
+    #     frequency_print=50,
+    #     data_type=data_type,
+    #     # guidance_weight=hyper_parameters["guidance_weight"],
+    # )
 
     DDPM.model = network(
         input_size=X.shape[1],
@@ -281,16 +282,16 @@ def main():
                 path_DDPM = filename
     path_DDPM = f"./weights/{data_type}/{nn_type}/noise{DDPM.noise_steps}/{path_DDPM}"
     DDPM.model.load_state_dict(torch.load(path_DDPM, weights_only=True))
-    hyper_parameters = GUIDANCE_WEIGHT_OPT(
-        DDPM,
-        y_val,
-        df_X,
-        df_y,
-        nn_type,
-        n_trials=50,
-        save_graph=False,
-        data_type=data_type,
-    )
+    # hyper_parameters = GUIDANCE_WEIGHT_OPT(
+    #     DDPM,
+    #     y_val,
+    #     df_X,
+    #     df_y,
+    #     nn_type,
+    #     n_trials=50,
+    #     save_graph=False,
+    #     data_type=data_type,
+    # )
 
     ##### EVALUATIONS #################################
 
@@ -302,48 +303,48 @@ def main():
         X,
         data_type=data_type,
     )
-    Train_error(
-        y_train,
-        DDPM,
-        hyper_parameters["guidance_weight"],
-        X_train,
-        df_X,
-        data_type=data_type,
-    )
+    # Train_error(
+    #     y_train,
+    #     DDPM,
+    #     hyper_parameters["guidance_weight"],
+    #     X_train,
+    #     df_X,
+    #     data_type=data_type,
+    # )
 
-    Test_error(
-        y_test,
-        DDPM,
-        hyper_parameters["guidance_weight"],
-        X_test,
-        df_X,
-        data_type=data_type,
-        display=False,
-    )
+    # Test_error(
+    #     y_test,
+    #     DDPM,
+    #     hyper_parameters["guidance_weight"],
+    #     X_test,
+    #     df_X,
+    #     data_type=data_type,
+    #     display=False,
+    # )
 
-    test_performaces(
-        y_test,
-        DDPM,
-        hyper_parameters["guidance_weight"],
-        df_X,
-        df_y,
-        display=True,
-        save=True,
-        nn_type=nn_type,
-        data_type=data_type,  # ignore
-    )
-    if data_type == "vcota":
-        inference_error(
-            nn_type,
-            DDPM,
-            hyper_parameters["guidance_weight"],
-            df_X,
-            df_y,
-            display=True,
-            save=True,
-            data_type=data_type,
-        )
-    print(path_DDPM)
+    # test_performaces(
+    #     y_test,
+    #     DDPM,
+    #     hyper_parameters["guidance_weight"],
+    #     df_X,
+    #     df_y,
+    #     display=True,
+    #     save=False,
+    #     nn_type=nn_type,
+    #     data_type=data_type,  # ignore
+    # )
+    # if data_type == "vcota":
+    #     inference_error(
+    #         nn_type,
+    #         DDPM,
+    #         hyper_parameters["guidance_weight"],
+    #         df_X,
+    #         df_y,
+    #         display=True,
+    #         save=False,
+    #         data_type=data_type,
+    #     )
+    # print(path_DDPM)
 
 
 if __name__ == "__main__":

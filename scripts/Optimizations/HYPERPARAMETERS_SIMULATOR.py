@@ -27,6 +27,7 @@ def HYPERPARAMETERS_OPT(
     num_epochs: int = 100,
     delete_previous_study: bool = True,
     data_type: str = "vcota",
+    type: str = "Simulator",
 ) -> None:
     def objective(trial: Trial) -> float:
         num_layers = trial.suggest_int("num_layers", 2, 20)
@@ -72,7 +73,7 @@ def HYPERPARAMETERS_OPT(
         hyper_parameters = json.load(file)
     if delete_previous_study:
         try:
-            os.remove(f"optuna_studies/{data_type}/Simulator.db")
+            os.remove(f"optuna_studies/{data_type}/{type}.db")
         except FileNotFoundError:
             pass
 
@@ -81,12 +82,12 @@ def HYPERPARAMETERS_OPT(
         sampler=optuna.samplers.TPESampler(seed=0),
         # pruner=optuna.pruners.SuccessiveHalvingPruner(min_resource=50),
         study_name=f"study",
-        storage=f"sqlite:///optuna_studies/{data_type}/Simulator.db",
+        storage=f"sqlite:///optuna_studies/{data_type}/{type}.db",
         load_if_exists=True,
     )
     study.optimize(objective, n_trials=num_trials)
     best_trial = study.best_trial
-    hyper_parameters["Simulator"].update(
+    hyper_parameters[type].update(
         {
             "nn_template": {
                 "hidden_layers": [
@@ -102,17 +103,17 @@ def HYPERPARAMETERS_OPT(
     plot_intermediate_values(study).update_layout(
         xaxis_title="Epoch",
         yaxis_title="Validation Loss",
-    ).write_html(f"./html_graphs/{data_type}/epoch_graphSimulator.html")
+    ).write_html(f"./html_graphs/{data_type}/epoch_graph{type}.html")
     plot_timeline(study).write_html(
-        f"./html_graphs/{data_type}/plot_timelineSimulator.html"
+        f"./html_graphs/{data_type}/plot_timeline{type}.html"
     )
     # plot_parallel_coordinate(study).write_html("parallel_coordinate.html")
     plot_param_importances(study).write_html(
-        f"./html_graphs/{data_type}/param_importancesSimulator.html"
+        f"./html_graphs/{data_type}/param_importances{type}.html"
     )
     plot_optimization_history(study).update_layout(
         xaxis_title="Trials",
         yaxis_title="Validation Loss",
-    ).write_html(f"./html_graphs/{data_type}/optimization_historySimulator.html")
+    ).write_html(f"./html_graphs/{data_type}/optimization_history{type}.html")
     with open(f"./templates/network_templates_{data_type}.json", "w") as file:
         json.dump(hyper_parameters, file, indent=4)

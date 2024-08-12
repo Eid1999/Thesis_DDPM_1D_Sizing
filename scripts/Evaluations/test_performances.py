@@ -80,7 +80,7 @@ def test_performaces(
     if data_type == "folded_vcota":
         df_y_test_aux.drop(columns=["cload"], inplace=True)
         df_y_Sampled_aux.drop(columns=["cload"], inplace=True)
-    error = np.mean(
+    error = np.median(
         np.abs(
             np.divide(
                 (df_y_test_aux - df_y_Sampled_aux),
