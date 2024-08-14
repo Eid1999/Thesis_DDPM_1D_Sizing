@@ -18,19 +18,43 @@ def inference_error(
     save: bool = False,
     data_type: str = "vcota",
 ) -> None:
-    y_target = np.array(
-        np.concatenate(
-            [
-                np.tile([50, 300e-6, 60e6, 65], (n_samples, 1)),
-                np.tile([40, 700e-6, 150e6, 55], (n_samples, 1)),
-                np.tile([50, 150e-6, 30e6, 65], (n_samples, 1)),
-                np.tile([53, 350e-6, 65e6, 55], (n_samples, 1)),
-            ]
+    columns = df_y.columns if data_type == "vcota" else df_y.columns[:-1]
+    mean = df_y[columns].mean()
+    std_dev = df_y[columns].std()
+    # start = idx + 2
+    if data_type == "folded_vcota":
+        cload_value = [df_y["cload"].mode()[0]]
+
+        point1 = mean
+        point2 = mean + std_dev
+        point3 = mean + 2 * std_dev
+        point4 = mean + 3 * std_dev
+        y_target = pd.DataFrame(
+            np.concatenate(
+                [
+                    np.tile(np.concatenate([point1, cload_value]), (n_samples, 1)),
+                    np.tile(np.concatenate([point2, cload_value]), (n_samples, 1)),
+                    np.tile(np.concatenate([point3, cload_value]), (n_samples, 1)),
+                    np.tile(np.concatenate([point4, cload_value]), (n_samples, 1)),
+                    # np.tile(np.concatenate([point1, cload_value]),(n_samples, 1))
+                ]
+            ),
+            columns=df_y.columns,
         )
-    )
+    if data_type == "vcota":
+        y_target = np.array(
+            np.concatenate(
+                [
+                    np.tile([50, 300e-6, 60e6, 65], (n_samples, 1)),
+                    np.tile([40, 700e-6, 150e6, 55], (n_samples, 1)),
+                    np.tile([50, 150e-6, 30e6, 65], (n_samples, 1)),
+                    np.tile([53, 350e-6, 65e6, 55], (n_samples, 1)),
+                ]
+            )
+        )
+        y_target = pd.DataFrame(y_target, columns=df_y.columns)
     if display:
         print("\n\n\nTarget Predictions")
-    y_target = pd.DataFrame(y_target, columns=df_y.columns)
 
     y_target_norm = normalization(
         y_target,
@@ -117,6 +141,11 @@ def inference_error(
             print(f"Error:\n{error}")
     if save:
         path = f"points_to_simulate/{data_type}/target/"
+        if data_type == "folded_vcota":
+            X_Sampled = pd.concat(
+                (X_Sampled, y_target["cload"]),
+                axis=1,
+            )
         os.makedirs(path, exist_ok=True)
         X_Sampled.to_csv(f"{path}sizing_target{nn_type}.csv")
         y_target.to_csv(f"{path}real_target{nn_type}.csv")

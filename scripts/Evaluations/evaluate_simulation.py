@@ -59,7 +59,7 @@ def main():
     for nn in NN_type:
         print(f"\t{nn}: \n")
         real_error = (
-            np.abs((sim["test"][nn] - real["test"][nn]) / sim["test"][nn]).median()
+            (np.abs((sim["test"][nn] - real["test"][nn]) / sim["test"][nn])).median()
         ).dropna()
         # nn_error = (
         # np.abs((sim["test"][nn] - NN["test"][nn]) / sim["test"][nn]).median()

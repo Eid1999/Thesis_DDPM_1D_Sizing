@@ -5,6 +5,7 @@ from .test_performances import test_performaces
 from .Train_error import Train_error
 from .histogram import histogram
 from .see_noise_data import see_noise_data
+from .plot_targets import plot_targets
 
 
 import sys

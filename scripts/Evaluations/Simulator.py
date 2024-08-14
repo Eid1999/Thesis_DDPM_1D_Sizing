@@ -57,8 +57,8 @@ def Test_error(
             data_type=data_type,
         )
         if data_type == "folded_vcota":
-            df_X_test = pd.concat(
-                (df_X_test, df_y_test["cload"]),
+            df_y_test = pd.concat(
+                (df_y_test, df_X_test["cload"]),
                 axis=1,
             )
         os.makedirs(path, exist_ok=True)

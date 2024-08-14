@@ -84,7 +84,6 @@ def main():
                 "_ln6",
                 "_ln4",
                 "_ln0",
-                "cload",
             ]
         ]
         df_X = dataframe[
@@ -93,6 +92,7 @@ def main():
                 "idd",
                 "gbw",
                 "pm",
+                "cload",
             ]
         ]
 
@@ -126,17 +126,17 @@ def main():
     X_test = torch.tensor(x_test, dtype=torch.float32, device=device)
     y_test = torch.tensor(y_test, dtype=torch.float32, device=device)
     print(data_type)
-    HYPERPARAMETERS_SIMULATOR(
-        X_train,
-        y_train,
-        X_val,
-        y_val,
-        num_trials=10,
-        num_epochs=500,
-        data_type=data_type,
-        delete_previous_study=True,
-        type="Supervised",
-    )
+    # HYPERPARAMETERS_SIMULATOR(
+    #     X_train,
+    #     y_train,
+    #     X_val,
+    #     y_val,
+    #     num_trials=10,
+    #     num_epochs=500,
+    #     data_type=data_type,
+    #     delete_previous_study=True,
+    #     type="Supervised",
+    # )
 
     with open(f"./templates/network_templates_{data_type}.json", "r") as file:
         hyper_parameters = json.load(file)
@@ -148,6 +148,18 @@ def main():
         **hyper_parameters["Supervised"],
         n_epoch=2000,
     )
+
+    os.makedirs(f"./weights/{data_type}", exist_ok=True)
+    torch.save(model.state_dict(), f"./weights/{data_type}/Supervised.pth")
+
+    model = Simulator(
+        X_train.shape[-1],
+        y_train.shape[-1],
+        **hyper_parameters["Supervised"]["nn_template"],
+    ).to("cuda")
+    model.load_state_dict(
+        torch.load(f"./weights/{data_type}/Supervised.pth", weights_only=True)
+    )
     Test_error(
         X_test,
         y_test,
@@ -157,8 +169,44 @@ def main():
         df_X=df_X,
         save=True,
     )
-    os.makedirs(f"./weights/{data_type}", exist_ok=True)
-    torch.save(model.state_dict(), f"./weights/{data_type}/Supervised.pth")
+    targets = pd.DataFrame(
+        np.array(
+            [
+                [49, 0.00013418900, 146217581, 63.39, 9.5e-12],
+                [51.08, 0.0002073, 239794398, 66.413, 9.5e-12],
+                [53.159, 0.00028044, 333371215, 69.43251, 9.5e-12],
+                [55.2382, 0.00035357, 426948032, 72.451, 9.5e-12],
+            ]
+        ),
+        columns=df_X.columns,
+    )
+    targets_norm = torch.tensor(
+        normalization(
+            targets,
+            data_type=data_type,
+            poly_bool=True,
+            df_original=df_X.copy(),
+        ).values,
+        device="cuda",
+        dtype=torch.float32,
+    )
+    sizing_targets = model(targets_norm)
+    sizing_targets = pd.DataFrame(
+        sizing_targets.detach().cpu().numpy(),
+        columns=df_y.columns,
+    )
+    sizing_targets = reverse_normalization(
+        sizing_targets,
+        df_y,
+        data_type=data_type,
+    )
+    if data_type == "folded_vcota":
+        sizing_targets = pd.concat(
+            (sizing_targets, targets["cload"]),
+            axis=1,
+        )
+    path = f"points_to_simulate/{data_type}/target/"
+    sizing_targets.to_csv(f"{path}sizing_targetSupervised.csv")
 
 
 if __name__ == "__main__":

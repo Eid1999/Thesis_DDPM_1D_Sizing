@@ -31,7 +31,7 @@ from Diffusion import DiffusionDPM
 guidance = True
 from Networks import MLP, MLP_skip, EoT
 
-nn_type = "EoT"  ## define NN type
+nn_type = "MLP"  ## define NN type
 
 
 def main():
@@ -170,7 +170,7 @@ def main():
         ]
 
     # plot_dataset(df_y)
-    plot_targets(df_y)
+    # plot_targets(df_y, data_type)
     X = normalization(
         df_X.copy(),
         data_type=data_type,
@@ -206,7 +206,11 @@ def main():
         test_size=0.5,
         random_state=0,
     )
-
+    plot_targets(
+        df_y,
+        data_type,
+        y_test=y_test,
+    )
     with open(f"./templates/network_templates_{data_type}.json", "r") as file:
         data = json.load(file)
     hyper_parameters = data[nn_type]
@@ -295,14 +299,14 @@ def main():
 
     ##### EVALUATIONS #################################
 
-    histogram(
-        DDPM,
-        hyper_parameters["guidance_weight"],
-        y,
-        df_X,
-        X,
-        data_type=data_type,
-    )
+    # histogram(
+    #     DDPM,
+    #     hyper_parameters["guidance_weight"],
+    #     y,
+    #     df_X,
+    #     X,
+    #     data_type=data_type,
+    # )
     # Train_error(
     #     y_train,
     #     DDPM,
@@ -333,17 +337,16 @@ def main():
     #     nn_type=nn_type,
     #     data_type=data_type,  # ignore
     # )
-    # if data_type == "vcota":
-    #     inference_error(
-    #         nn_type,
-    #         DDPM,
-    #         hyper_parameters["guidance_weight"],
-    #         df_X,
-    #         df_y,
-    #         display=True,
-    #         save=False,
-    #         data_type=data_type,
-    #     )
+    # inference_error(
+    #     nn_type,
+    #     DDPM,
+    #     hyper_parameters["guidance_weight"],
+    #     df_X,
+    #     df_y,
+    #     display=True,
+    #     save=True,
+    #     data_type=data_type,
+    # )
     # print(path_DDPM)
 
 
