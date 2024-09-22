@@ -35,3 +35,12 @@ from torch.utils.data import Dataset
 from lightning import Fabric
 
 data_type = "vcota"
+
+
+units = {
+    "gdc": "DC Gain[dB]",
+    "gbw": "Gain-Bandwidth Product[Hz]",
+    "idd": "Bias Current [A]",
+    "cload": "Capacitance Load [F]",
+    "pm": "Phase Margin[°]",
+}

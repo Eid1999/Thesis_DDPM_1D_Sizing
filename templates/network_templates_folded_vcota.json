@@ -11,7 +11,7 @@
         "learning_rate": 0.0016075376638196859,
         "loss_type": "l1",
         "noise_steps": 10,
-        "guidance_weight": 0.07924071942642641
+        "guidance_weight": 0.10915691163173324
     },
     "MLP_skip": {
         "nn_template": {
@@ -34,7 +34,7 @@
         "batch_size": 166,
         "learning_rate": 0.0005426761637177589,
         "loss_type": "l1",
-        "guidance_weight": 0.031313200243730854,
+        "guidance_weight": 0.03432706585576492,
         "noise_steps": 10
     },
     "EoT": {
@@ -73,7 +73,7 @@
         "learning_rate": 8.787357956429702e-05,
         "loss_type": "mse",
         "noise_steps": 10,
-        "guidance_weight": 0.006136222283937176
+        "guidance_weight": 0.008553757373982993
     },
     "Simulator": {
         "nn_template": {

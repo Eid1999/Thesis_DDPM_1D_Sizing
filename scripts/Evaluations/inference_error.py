@@ -19,12 +19,12 @@ def inference_error(
     data_type: str = "vcota",
 ) -> None:
     columns = df_y.columns if data_type == "vcota" else df_y.columns[:-1]
-    mean = df_y[columns].mean()
-    std_dev = df_y[columns].std()
+
     # start = idx + 2
     if data_type == "folded_vcota":
         cload_value = [df_y["cload"].mode()[0]]
-
+        mean = df_y[df_y["cload"] == cload_value[0]][columns].mean()
+        std_dev = df_y[df_y["cload"] == cload_value[0]][columns].std()
         point1 = mean
         point2 = mean + std_dev
         point3 = mean + 2 * std_dev
@@ -42,6 +42,8 @@ def inference_error(
             columns=df_y.columns,
         )
     if data_type == "vcota":
+        mean = df_y[columns].mean()
+        std_dev = df_y[columns].std()
         y_target = np.array(
             np.concatenate(
                 [

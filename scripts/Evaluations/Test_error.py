@@ -11,7 +11,7 @@ def Test_error(
     y_test: torch.Tensor,
     DDPM,
     best_weight: int,
-    X_test: np.ndarray,
+    X_test: torch.Tensor,
     df_X: pd.DataFrame,
     data_type: str = "vcota",
     display: bool = False,
@@ -27,7 +27,7 @@ def Test_error(
         X_Sampled.cpu().numpy(),
         columns=df_X.columns,
     )
-    df_X_test = pd.DataFrame(X_test, columns=df_X.columns)
+    df_X_test = pd.DataFrame(X_test.cpu().numpy(), columns=df_X.columns)
     df_Sampled = reverse_normalization(
         df_Sampled,
         df_X.copy(),

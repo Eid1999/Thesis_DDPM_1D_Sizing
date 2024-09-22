@@ -31,7 +31,7 @@ from Diffusion import DiffusionDPM
 guidance = True
 from Networks import MLP, MLP_skip, EoT
 
-nn_type = "MLP"  ## define NN type
+nn_type = "EoT"  ## define NN type
 
 
 def main():
@@ -170,7 +170,7 @@ def main():
         ]
 
     # plot_dataset(df_y)
-    # plot_targets(df_y, data_type)
+
     X = normalization(
         df_X.copy(),
         data_type=data_type,
@@ -185,8 +185,10 @@ def main():
         norm_max = X.max()
 
     if False:
-        value = np.unique(y[:, -1])[0]
-        idx = np.any(np.isin(y, value), axis=1)
+        value_counts = df_y["cload"].value_counts()
+        value = value_counts.idxmin()
+        # value = np.unique(y[:, -1])[0]
+        idx = np.any(np.isin(df_y, value), axis=1)
         mask = np.ones(X.shape[0], dtype=bool)
         idxa = np.where(idx)[0]
         mask[idxa] = False
@@ -206,11 +208,11 @@ def main():
         test_size=0.5,
         random_state=0,
     )
-    plot_targets(
-        df_y,
-        data_type,
-        y_test=y_test,
-    )
+    # plot_targets(
+    #     df_y,
+    #     data_type,
+    #     # y_test=y_test,
+    # )
     with open(f"./templates/network_templates_{data_type}.json", "r") as file:
         data = json.load(file)
     hyper_parameters = data[nn_type]
@@ -230,7 +232,8 @@ def main():
     X_val = torch.tensor(X_val, dtype=torch.float32, device=DDPM.device)
     y_val = torch.tensor(y_val, dtype=torch.float32, device=DDPM.device)
     y_test = torch.tensor(y_test, dtype=torch.float32, device=DDPM.device)
-    # see_noise_data(DDPM, X_train, df_X)
+    X_test = torch.tensor(X_test, dtype=torch.float32, device=DDPM.device)
+    see_noise_data(DDPM, X_train, df_X)
     # hyper_parameters = HYPERPARAMETERS_DDPM(
     #     X_train,
     #     y_train,
@@ -259,7 +262,7 @@ def main():
     #     nn_type,
     #     X_val=X_val,
     #     y_val=y_val,
-    #     epochs=10000,
+    #     epochs=5000,
     #     early_stop=False,
     #     **hyper_parameters,
     #     frequency_print=50,
@@ -286,9 +289,10 @@ def main():
                 path_DDPM = filename
     path_DDPM = f"./weights/{data_type}/{nn_type}/noise{DDPM.noise_steps}/{path_DDPM}"
     DDPM.model.load_state_dict(torch.load(path_DDPM, weights_only=True))
+
     # hyper_parameters = GUIDANCE_WEIGHT_OPT(
     #     DDPM,
-    #     y_val,
+    #     y_test,
     #     df_X,
     #     df_y,
     #     nn_type,
@@ -299,14 +303,14 @@ def main():
 
     ##### EVALUATIONS #################################
 
-    # histogram(
-    #     DDPM,
-    #     hyper_parameters["guidance_weight"],
-    #     y,
-    #     df_X,
-    #     X,
-    #     data_type=data_type,
-    # )
+    histogram(
+        DDPM,
+        hyper_parameters["guidance_weight"],
+        y,
+        df_X,
+        X,
+        data_type=data_type,
+    )
     # Train_error(
     #     y_train,
     #     DDPM,
@@ -333,7 +337,7 @@ def main():
     #     df_X,
     #     df_y,
     #     display=True,
-    #     save=False,
+    #     save=True,
     #     nn_type=nn_type,
     #     data_type=data_type,  # ignore
     # )
@@ -347,7 +351,7 @@ def main():
     #     save=True,
     #     data_type=data_type,
     # )
-    # print(path_DDPM)
+    print(path_DDPM)
 
 
 if __name__ == "__main__":

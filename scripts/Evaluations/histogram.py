@@ -6,6 +6,7 @@ from libraries import *
 
 from Dataset import normalization, reverse_normalization
 import matplotlib.ticker as ticker
+from matplotlib.ticker import ScalarFormatter, LogLocator
 
 
 def histogram(
@@ -40,7 +41,7 @@ def histogram(
         df_X.copy(),
         data_type=data_type,
     )
-
+    plt.rcParams["xtick.labelsize"] = 7
     fig, axs = plt.subplots(math.ceil(X_Sampled.shape[1] / 2), 2)
     idx = 0
     for i in range(axs.shape[1]):
@@ -48,7 +49,7 @@ def histogram(
             if X_Sampled.shape[1] - 1 < idx:
                 fig.delaxes(axs[j, i])
                 break
-            axs[j, i].set_title(f"Sample {df_Sampled_hist.columns[idx]}")
+            # axs[j, i].set_title(f"Sample {df_Sampled_hist.columns[idx]}")
             plot_data = pd.DataFrame(
                 {
                     "Sampled Data": df_Sampled_hist.iloc[:, idx],
@@ -67,13 +68,17 @@ def histogram(
                     else False
                 ),
             )
-
-            idx += 1
+            axs[j, i].set_xlabel(f"{df_Sampled_hist.columns[idx]}", fontsize=10)
+            # axs[j, i].xaxis.set_major_locator(
+            #     ticker.LogLocator(base=10.0, numticks=5, subs=[1.20, 1.0, 0.5])
+            # )
+            # axs[j, i].xaxis.set_major_formatter(ScalarFormatter())
+            # axs[j, i].set_xticklabels(axs[j, i].get_xticklabels(), fontsize=7)
 
             # if j == 0:
             #     for ind, label in enumerate(axs[j, i].get_xticklabels()):
             #         label.set_visible(False)
-
+            idx += 1
     sns.move_legend(
         axs[axs.shape[0] // 2 - 1, axs.shape[1] - 1],
         loc="center left",
@@ -84,3 +89,19 @@ def histogram(
     )
 
     plt.show()
+    # "gdc",
+    # "idd",
+    # "gbw",
+    # "pm",
+    # "w8",
+    # "w6",
+    # "w4",
+    # "w10",
+    # "w1",
+    # "w0",
+    # "l8",
+    # "l6",
+    # "l4",
+    # "l10",
+    # "l1",
+    # "l0"

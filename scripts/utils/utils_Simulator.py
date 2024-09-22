@@ -55,14 +55,14 @@ def epoch_loop(
     )
     optimizer = optim.Adam(  # type: ignore
         model.parameters(),
-        lr=lr,
+        # lr=lr,
         weight_decay=1e-6,
     )
     patience = 0
     dataloader = DataLoader(
         TensorDataset(X_train, y_train), batch_size=batch_size, shuffle=True
     )
-    loss_fn = nn.L1Loss(reduction="mean")
+    loss_fn = nn.MSELoss(reduction="mean")
     scheduler = lr_scheduler.ExponentialLR(optimizer, gamma=0.99)
     val_loss = Eval_loop(X_val, y_val, model_comp, loss_fn)  # type: ignore
     pbar = tqdm(range(n_epoch))

@@ -101,7 +101,7 @@ class DiffusionDPM:
         return noisy_x, epsilon
 
     def sample_time(self, n: int) -> torch.Tensor:
-        return torch.randint(0, self.noise_steps, size=(n,), device=self.device)
+        return torch.randint(1, self.noise_steps, size=(n,), device=self.device)
 
     def sampling(
         self,
@@ -116,7 +116,7 @@ class DiffusionDPM:
             x = torch.randn(
                 n, self.vect_size, 1, device=self.device, dtype=torch.float
             ).squeeze()
-            for i in reversed(range(0, self.noise_steps)):
+            for i in reversed(range(1, self.noise_steps)):
                 t = (torch.ones(n) * i).long().to(self.device)
                 alpha = self.alpha[t][:, None]
                 sqrt_one_minus_alpha_hat = torch.sqrt(1 - self.alpha_hat[t])[:, None]
@@ -125,7 +125,7 @@ class DiffusionDPM:
                     torch.randn(
                         n, self.vect_size, 1, device=self.device, dtype=torch.float32
                     ).squeeze()
-                    if i > 0
+                    if i > 1
                     else torch.zeros_like(x)
                 )
                 uncoditional_predicted_noise = model(x, t)

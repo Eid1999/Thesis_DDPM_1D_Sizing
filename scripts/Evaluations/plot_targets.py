@@ -18,22 +18,24 @@ def plot_targets(df_y, data_type, y_test=None):
         plt.suptitle("Locations of the Test points")
     df_y_copy["type"] = "Whole Datset"
     df_y_copy["size"] = default_size
+
     # for idx, ax in enumerate(axis):
     #     col1, col2 = df_y.columns[idx * 2 : (idx + 1) * 2]
     #     sns.scatterplot(
-    #         df_y,
+    #         df_y_copy,
     #         x=col1,
     #         y=col2,
     #         ax=ax,
     #     )
-    #
-    #
+
     columns = df_y.columns if data_type == "vcota" else df_y.columns[:-1]
     if y_test is None:
 
         if data_type == "folded_vcota":
-            mean = df_y[columns].mean()
-            std_dev = df_y[columns].std()
+            cload_value = df_y["cload"].mode()[0]
+            df_y_copy = df_y_copy[df_y["cload"] == cload_value]
+            mean = df_y_copy[columns].mean()
+            std_dev = df_y_copy[columns].std()
             point1 = mean
             point2 = mean + std_dev
             point3 = mean + 2 * std_dev
@@ -49,6 +51,8 @@ def plot_targets(df_y, data_type, y_test=None):
                 ),
                 columns=columns,
             )
+            plt.suptitle(f"Locations of the Target points(Cload : {cload_value})")
+
         else:
             targets = np.array(
                 [
@@ -59,10 +63,11 @@ def plot_targets(df_y, data_type, y_test=None):
                 ]
             )
             targets = pd.DataFrame(targets, columns=df_y.columns)
+            plt.suptitle(f"Locations of the Target points")
+
         for i in range(4):
             targets.loc[i, "type"] = f"Target {i}"
         targets["size"] = 80
-        plt.suptitle("Locations of the Target points")
     dark_palette = sns.color_palette(
         ["#4682B4", "#641E16", "#4A235A", "#873600", "#7D6608", "#1F618D"]
     )
@@ -78,14 +83,16 @@ def plot_targets(df_y, data_type, y_test=None):
             y=col2,
             ax=ax,
             hue="type",
-            palette=dark_palette,
+            # palette=dark_palette,
             size="size",
             legend=False if idx != 1 else True,
         )
-        if col2 in ["idd", "pm"]:
-            ax.set_yscale("log")
-        if col1 == "gbw":
-            ax.set_xscale("log")
+        # if col2 in ["idd", "pm"]:
+        #     ax.set_yscale("log")
+        ax.set_xlabel(f"{units[col1]}")
+        ax.set_ylabel(f"{units[col2]}")
+        # if col1 == "gbw":
+        #     ax.set_xscale("log")
     h, l = ax.get_legend_handles_labels()
 
     # slice the appropriate section of l and h to include in the legend

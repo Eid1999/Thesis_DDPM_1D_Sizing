@@ -133,42 +133,17 @@
     "Supervised": {
         "nn_template": {
             "hidden_layers": [
-                1030,
-                552,
-                401,
-                204,
-                701,
-                221,
-                2743,
-                4088,
-                164,
-                1575,
-                367,
-                455
+                120,
+                240,
+                60
             ]
         },
-        "batch_size": 432,
+        "batch_size": 512,
         "lr": 1.92373050965465e-06
     },
     "Normalization": {
         "type_normalization": "minmax",
         "log_norm": [
-            "gdc",
-            "idd",
-            "gbw",
-            "pm",
-            "w8",
-            "w6",
-            "w4",
-            "w10",
-            "w1",
-            "w0",
-            "l8",
-            "l6",
-            "l4",
-            "l10",
-            "l1",
-            "l0"
         ]
     }
 }

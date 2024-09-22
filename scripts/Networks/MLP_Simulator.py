@@ -29,12 +29,12 @@ class Simulator(nn.Module):
                             hidden_layers[i] if i < len(hidden_layers) else output_size
                         ),
                     ),
-                    (
-                        nn.LayerNorm(hidden_layers[i])
-                        if i < len(hidden_layers)
-                        else nn.Identity()
-                    ),
-                    nn.PReLU() if i < len(hidden_layers) else nn.Identity(),
+                    # (
+                    #     nn.LayerNorm(hidden_layers[i])
+                    #     if i < len(hidden_layers)
+                    #     else nn.Identity()
+                    # ),
+                    nn.ReLU() if i < len(hidden_layers) else nn.Identity(),
                 )
                 for i in range(len(hidden_layers) + 1)
             ]
